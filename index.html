@@ -277,11 +277,17 @@
         }
 
         function setFilter(filter) { state.filter = filter; updateHeaderButtons(); render(); }
+        
         function setView(view) { 
-            const isSwitchingToYear = (view === 'year' && state.view !== 'year');
+            const isSwitching = state.view !== view;
+            const targetView = view;
             state.view = view; 
             updateHeaderButtons(); 
-            render(isSwitchingToYear); 
+            render({ 
+                toYear: isSwitching && targetView === 'year',
+                toWeek: isSwitching && targetView === 'week',
+                toMonth: isSwitching && targetView === 'month'
+            }); 
         }
         
         function navigateDate(direction) {
@@ -291,9 +297,14 @@
             else if (state.view === 'year') state.currentDate.setFullYear(state.currentDate.getFullYear() + direction);
             render();
         }
+
         function resetDate() { 
             state.currentDate = new Date(); 
-            render(state.view === 'year'); // 若在年度視圖點擊，則觸發自動捲動
+            render({ 
+                toYear: state.view === 'year',
+                toWeek: state.view === 'week',
+                toMonth: state.view === 'month'
+            }); 
         }
 
         function renderDayView() {
@@ -361,7 +372,10 @@
                 const isToday = dateStr === formatDate(new Date());
                 const dayTasks = state.tasks.filter(t => t.date === dateStr && (state.filter === 'all' || t.category === state.filter)).sort((a, b) => a.time.localeCompare(b.time));
 
-                html += `<div class="flex flex-col bg-white rounded-xl shadow-sm border ${isToday ? 'border-indigo-400 ring-1 ring-indigo-400' : 'border-slate-200'} overflow-hidden min-h-[120px] relative group cursor-pointer active:bg-slate-50" onclick="openModal('${dateStr}')">
+                // 賦予今天的區塊一個專屬 ID，方便滑動尋找
+                const todayIdAttr = isToday ? 'id="week-today"' : '';
+
+                html += `<div ${todayIdAttr} class="flex flex-col bg-white rounded-xl shadow-sm border ${isToday ? 'border-indigo-400 ring-1 ring-indigo-400' : 'border-slate-200'} overflow-hidden min-h-[120px] relative group cursor-pointer active:bg-slate-50" onclick="openModal('${dateStr}')">
                             <div class="${isToday ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-50 text-slate-600'} text-center py-2 text-sm font-bold border-b border-slate-100 flex sm:flex-col justify-between sm:justify-center px-4 sm:px-0 items-center">
                                 <span>${daysOfWeek[currentDay.getDay()]}</span><span class="sm:text-lg">${currentDay.getDate()}日</span>
                             </div><div class="flex-1 p-2 space-y-1.5">`;
@@ -388,37 +402,99 @@
             const startingDayOfWeek = firstDay.getDay(); 
             const totalDays = lastDay.getDate();
 
+            // 🌟 115學年度 (2026/8 ~ 2027/7) 台灣國定假日與連假預估資料表
+            const twHolidays = {
+                '2026-09-25': '中秋節',
+                '2026-09-28': '教師節', 
+                '2026-10-09': '國慶連假',
+                '2026-10-10': '國慶日',
+                '2026-10-25': '光復節',
+                '2026-10-26': '光復補假',
+                '2026-12-25': '行憲紀念',
+                '2027-01-01': '元旦',
+                '2027-02-04': '小年夜',
+                '2027-02-05': '除夕',
+                '2027-02-06': '春節',
+                '2027-02-07': '春節',
+                '2027-02-08': '春節',
+                '2027-02-09': '春節',
+                '2027-02-10': '春節補假',
+                '2027-02-28': '228紀念',
+                '2027-03-01': '228補假',
+                '2027-04-03': '清明連假',
+                '2027-04-04': '兒童節',
+                '2027-04-05': '清明節',
+                '2027-04-06': '清明補假',
+                '2027-04-30': '勞動補假',
+                '2027-05-01': '勞動節',
+                '2027-06-09': '端午節'
+            };
+
             let html = `<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col mt-2 sm:mt-4">
                             <div class="grid grid-cols-7 border-b border-slate-200 bg-slate-50">`;
-            daysOfWeek.forEach(day => html += `<div class="py-2 text-center text-[11px] sm:text-sm font-bold text-slate-600">${day}</div>`);
+            
+            // 標題列：週六週日變紅色
+            daysOfWeek.forEach((day, index) => {
+                const isWeekend = index === 0 || index === 6;
+                const textColor = isWeekend ? 'text-red-400' : 'text-slate-600';
+                html += `<div class="py-2 text-center text-[11px] sm:text-sm font-bold ${textColor}">${day}</div>`;
+            });
             html += `</div><div class="grid grid-cols-7">`;
 
+            // 月初的空白格
             for (let i = 0; i < startingDayOfWeek; i++) {
-                html += `<div class="border-b border-r border-slate-100 bg-slate-50/50 p-1 sm:p-2 min-h-[90px] sm:min-h-[110px]"></div>`;
+                const isWeekend = i === 0 || i === 6;
+                const bgClass = isWeekend ? 'bg-red-50/40' : 'bg-slate-50/50';
+                html += `<div class="border-b border-r border-slate-100 ${bgClass} p-1 sm:p-2 min-h-[90px] sm:min-h-[110px]"></div>`;
             }
 
             const todayStr = formatDate(new Date());
             for (let i = 1; i <= totalDays; i++) {
-                const dateStr = formatDate(new Date(year, month, i));
+                const currentCellDate = new Date(year, month, i);
+                const currentDayOfWeek = currentCellDate.getDay();
+                const isWeekend = currentDayOfWeek === 0 || currentDayOfWeek === 6;
+                const dateStr = formatDate(currentCellDate);
                 const isToday = dateStr === todayStr;
+                
+                // 判斷是否為假期
+                const holidayName = twHolidays[dateStr] || null;
+                const isHoliday = holidayName !== null;
+
                 const dayTasks = state.tasks.filter(t => t.date === dateStr && (state.filter === 'all' || t.category === state.filter)).sort((a, b) => a.time.localeCompare(b.time));
 
-                html += `<div onclick="openModal('${dateStr}')" class="border-b border-r border-slate-100 p-1 sm:p-2 flex flex-col min-h-[90px] sm:min-h-[110px] cursor-pointer hover:bg-slate-50 active:bg-slate-100 ${isToday ? 'bg-indigo-50/30' : 'bg-white'}">
-                    <div class="text-center sm:text-right mb-1">
-                        <span class="inline-block w-5 h-5 sm:w-6 sm:h-6 text-center leading-5 sm:leading-6 rounded-full text-[11px] sm:text-sm ${isToday ? 'bg-indigo-600 text-white font-bold' : 'text-slate-700 font-medium'}">${i}</span>
-                    </div><div class="flex-1 space-y-1 pb-1">`;
+                // 決定格子底色：假日與週末為淡紅色
+                let cellBg = 'bg-white';
+                if (isToday) cellBg = 'bg-indigo-50/40 ring-1 ring-inset ring-indigo-500/20';
+                else if (isWeekend || isHoliday) cellBg = 'bg-red-50/40';
+
+                // 決定文字與圓圈顏色
+                let dateTextColor = isToday ? 'bg-indigo-600 text-white font-bold' : ((isWeekend || isHoliday) ? 'text-red-500 font-medium' : 'text-slate-700 font-medium');
+
+                html += `<div onclick="openModal('${dateStr}')" class="border-b border-r border-slate-100 p-1 sm:p-2 flex flex-col min-h-[90px] sm:min-h-[110px] cursor-pointer hover:bg-slate-50 active:bg-slate-100 ${cellBg}">
+                    <div class="flex flex-col sm:flex-row items-center sm:justify-end mb-1 gap-0.5 sm:gap-1.5 w-full">
+                        ${holidayName ? `<span class="text-[10px] sm:text-[11px] text-red-500/90 font-bold order-2 sm:order-1 truncate w-full sm:w-auto text-center">${holidayName}</span>` : ''}
+                        <span class="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[11px] sm:text-sm shrink-0 ${dateTextColor} order-1 sm:order-2">${i}</span>
+                    </div><div class="flex-1 space-y-1 pb-1 overflow-hidden">`;
                 
                 dayTasks.forEach(task => {
                     let bgClass = task.category === 'discipline' ? 'bg-blue-100 text-blue-800 border-l-2 border-blue-500' : 'bg-emerald-100 text-emerald-800 border-l-2 border-emerald-500';
                     if (task.isImportant) bgClass = 'bg-red-100 text-red-800 border-l-2 border-red-500 font-bold';
-                    html += `<div onclick="event.stopPropagation(); editTask('${task.id}')" class="px-1.5 py-1 sm:px-1.5 sm:py-0.5 rounded-sm sm:rounded text-[10px] leading-tight sm:text-xs truncate ${bgClass} ${task.completed ? 'line-through opacity-50 grayscale' : ''}">${task.title}</div>`;
+                    
+                    // 手機板文字樣式優化
+                    let iconHtml = task.category === 'discipline' ? `<span class="font-bold text-[10px] mr-0.5">生</span>` : `<span class="font-bold text-[10px] mr-0.5">體</span>`;
+                    
+                    html += `<div onclick="event.stopPropagation(); editTask('${task.id}')" class="px-1.5 py-1 sm:px-1.5 sm:py-0.5 rounded-sm sm:rounded text-[11px] sm:text-xs truncate ${bgClass} ${task.completed ? 'line-through opacity-50 grayscale' : ''}">${iconHtml}${task.title}</div>`;
                 });
                 html += `</div></div>`;
             }
             
+            // 月底的空白格
             const totalCells = startingDayOfWeek + totalDays;
             for (let i = 0; i < (7 - (totalCells % 7)) % 7; i++) {
-                html += `<div class="border-b border-r border-slate-100 bg-slate-50/50 p-1 min-h-[90px]"></div>`;
+                const currentDayOfWeek = (totalCells + i) % 7;
+                const isWeekend = currentDayOfWeek === 0 || currentDayOfWeek === 6;
+                const bgClass = isWeekend ? 'bg-red-50/40' : 'bg-slate-50/50';
+                html += `<div class="border-b border-r border-slate-100 ${bgClass} p-1 min-h-[90px]"></div>`;
             }
             html += `</div></div>`;
             container.innerHTML = html;
@@ -470,22 +546,41 @@
             container.innerHTML = html;
         }
 
-        function render(scrollToCurrentMonth = false) {
+        function render(scrollOptions = {}) {
             const startYear = state.currentDate.getMonth() < 7 ? state.currentDate.getFullYear() - 1 : state.currentDate.getFullYear();
             document.getElementById('main-app-title').innerText = `【${startYear - 1911}學年度生教體育組行事曆】`;
 
-            if (state.view === 'day') renderDayView();
-            else if (state.view === 'week') renderWeekView();
-            else if (state.view === 'month') renderMonthView();
-            else if (state.view === 'year') {
+            if (state.view === 'day') {
+                renderDayView();
+            } else if (state.view === 'week') {
+                renderWeekView();
+                // 智慧定位：如果剛切換到單週視圖，自動向下捲動至「今天」
+                if (scrollOptions.toWeek) {
+                    setTimeout(() => {
+                        const todayEl = document.getElementById('week-today');
+                        if (todayEl) {
+                            const headerOffset = 135; 
+                            const elementPosition = todayEl.getBoundingClientRect().top;
+                            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                            window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                        }
+                    }, 100);
+                }
+            } else if (state.view === 'month') {
+                renderMonthView();
+                // 智慧定位：如果剛切換回單月視圖，強制畫面回到最頂部
+                if (scrollOptions.toMonth) {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+            } else if (state.view === 'year') {
                 renderYearView();
                 // 智慧定位：如果剛切換到年度視圖，則自動向下捲動至「目前月份」
-                if (scrollToCurrentMonth) {
+                if (scrollOptions.toYear) {
                     setTimeout(() => {
                         const currentM = new Date().getMonth();
                         const el = document.getElementById(`year-month-${currentM}`);
                         if (el) {
-                            const headerOffset = 135; // 預留頂部固定選單的高度
+                            const headerOffset = 135; 
                             const elementPosition = el.getBoundingClientRect().top;
                             const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
                             window.scrollTo({ top: offsetPosition, behavior: "smooth" });
