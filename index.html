@@ -111,7 +111,8 @@
 
     <!-- 新增/編輯任務 Modal -->
     <div id="task-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
-        <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all modal-enter flex flex-col max-h-[90vh] sm:max-h-[85vh]" id="task-modal-content">
+        <!-- 【關鍵修正 1】：將最大高度改為 85dvh，確保不會超過手機螢幕範圍 -->
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all modal-enter flex flex-col max-h-[85dvh] sm:max-h-[85vh]" id="task-modal-content">
             
             <div class="p-4 sm:p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
                 <h3 class="text-lg font-bold text-slate-800" id="modal-title">新增工作事項</h3>
@@ -120,7 +121,8 @@
                 </button>
             </div>
             
-            <div class="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 overscroll-contain">
+            <!-- 【關鍵修正 2】：加入 min-h-0 允許內部滾動，不再撐破版面 -->
+            <div class="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 min-h-0 overscroll-contain">
                 
                 <div id="status-container" class="hidden flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200">
                     <label class="text-sm font-bold text-slate-700 flex items-center gap-2 cursor-pointer w-full" for="task-completed">
