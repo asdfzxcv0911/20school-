@@ -555,7 +555,8 @@
             const end = addDays(start, 6);
             document.getElementById('current-date-display').innerText = `${start.getMonth() + 1}/${start.getDate()} - ${end.getMonth() + 1}/${end.getDate()}`;
 
-            let html = `<div class="grid grid-cols-1 sm:grid-cols-7 gap-3 sm:gap-4 pb-10 mt-2 sm:mt-4">`;
+            // 將電腦版網格改為直排 (flex-col)，並加上最大寬度限制
+            let html = `<div class="flex flex-col gap-3 sm:gap-4 pb-10 mt-2 sm:mt-4 max-w-5xl mx-auto">`;
             for (let i = 0; i < 7; i++) {
                 const currentDay = addDays(start, i);
                 const dateStr = formatDate(currentDay);
@@ -564,15 +565,29 @@
 
                 const todayIdAttr = isToday ? 'id="week-today"' : '';
 
-                html += `<div ${todayIdAttr} class="flex flex-col bg-white rounded-xl shadow-sm border ${isToday ? 'border-indigo-400 ring-1 ring-indigo-400' : 'border-slate-200'} overflow-hidden min-h-[120px] relative group cursor-pointer active:bg-slate-50" onclick="openTaskModal('${dateStr}')">
-                            <div class="${isToday ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-50 text-slate-600'} text-center py-2 text-sm font-bold border-b border-slate-100 flex sm:flex-col justify-between sm:justify-center px-4 sm:px-0 items-center">
-                                <span>${daysOfWeek[currentDay.getDay()]}</span><span class="sm:text-lg">${currentDay.getDate()}日</span>
-                            </div><div class="flex-1 p-2 space-y-1.5">`;
+                // 電腦版改為橫式卡片 (sm:flex-row)
+                html += `<div ${todayIdAttr} class="flex flex-col sm:flex-row bg-white rounded-xl shadow-sm border ${isToday ? 'border-indigo-400 ring-1 ring-indigo-400' : 'border-slate-200'} overflow-hidden min-h-[120px] sm:min-h-[90px] relative group cursor-pointer active:bg-slate-50 hover:bg-slate-50 transition-colors" onclick="openTaskModal('${dateStr}')">
+                            <div class="${isToday ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-50 text-slate-600'} text-center py-2 sm:py-4 px-4 w-full sm:w-28 flex flex-row sm:flex-col justify-between sm:justify-center items-center border-b sm:border-b-0 sm:border-r border-slate-100 shrink-0">
+                                <span class="text-sm font-bold">${daysOfWeek[currentDay.getDay()]}</span>
+                                <span class="sm:text-lg font-bold sm:mt-1">${currentDay.getDate()}日</span>
+                            </div>
+                            <div class="flex-1 p-2 sm:p-3 flex flex-col justify-center space-y-1.5 sm:space-y-2">`;
+                
+                if (dayTasks.length === 0) {
+                    html += `<div class="text-slate-400 text-sm px-2 py-1 hidden sm:block opacity-50 font-medium">尚無工作紀錄</div>`;
+                }
 
                 dayTasks.forEach(task => {
                     let colorClass = task.category === 'discipline' ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800';
                     if (task.isImportant) colorClass = 'bg-red-50 border-red-300 text-red-800 font-bold';
-                    html += `<div onclick="event.stopPropagation(); editTask('${task.id}')" class="p-2 rounded-lg border text-[13px] sm:text-xs truncate ${colorClass} ${task.completed ? 'line-through opacity-50 grayscale' : ''}">${task.title}</div>`;
+                    
+                    // 手機版維持 truncate 截斷，電腦版則使用 sm:whitespace-normal 讓文字完整換行顯示
+                    html += `<div onclick="event.stopPropagation(); editTask('${task.id}')" class="p-2 sm:px-3 sm:py-2.5 rounded-lg border text-[13px] sm:text-sm ${colorClass} ${task.completed ? 'line-through opacity-50 grayscale' : 'hover:brightness-95 transition-all'}">
+                                <div class="truncate sm:whitespace-normal sm:break-words flex items-start gap-1.5 sm:gap-2">
+                                    ${task.time ? `<span class="font-mono text-[11px] sm:text-xs opacity-75 bg-white/50 px-1.5 py-0.5 rounded hidden sm:inline-block mt-0.5 shrink-0">${task.time}</span>` : ''}
+                                    <span class="flex-1">${task.title}</span>
+                                </div>
+                            </div>`;
                 });
                 html += `</div></div>`;
             }
