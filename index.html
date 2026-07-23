@@ -13,6 +13,7 @@
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
             -webkit-tap-highlight-color: transparent;
             -webkit-overflow-scrolling: touch; 
+            overflow-x: hidden;
         }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -28,12 +29,11 @@
         .modal-exit { opacity: 1; transform: scale(1); }
         .modal-exit-active { opacity: 0; transform: scale(0.95); transition: all 0.2s ease-in; }
 
-        .calendar-cell:hover .add-task-btn { opacity: 1; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="text-slate-800 bg-slate-50 min-h-[100dvh] flex flex-col relative pb-20 sm:pb-0 overflow-x-hidden w-full">
+<body class="text-slate-800 bg-slate-50 min-h-[100dvh] flex flex-col relative pb-20 sm:pb-0 w-full">
 
     <div class="sticky top-0 z-40 w-full shadow-sm flex flex-col shrink-0">
         
@@ -90,7 +90,7 @@
     </div>
 
     <!-- 行事曆主內容區 -->
-    <main id="calendar-main" class="flex-1 w-full max-w-7xl mx-auto p-2 sm:p-4"></main>
+    <main id="calendar-main" class="flex-1 w-full max-w-7xl mx-auto p-2 sm:p-4 touch-pan-y"></main>
 
     <!-- 課表主內容區 (全螢幕網格版) -->
     <main id="schedule-main" class="hidden flex-1 w-full max-w-6xl mx-auto p-1 sm:p-6 pb-20">
@@ -338,7 +338,6 @@
             const navCalendar = document.getElementById('nav-calendar');
             const navSchedule = document.getElementById('nav-schedule');
             
-            // 安全取得所有容器，避免找不到元素導致整個網頁當機
             const calendarHeader = document.getElementById('calendar-header-controls');
             const calendarMain = document.getElementById('calendar-main');
             const scheduleMain = document.getElementById('schedule-main');
@@ -448,12 +447,13 @@
             
             // 智慧捲動
             if (view === 'month') {
+                // 單月視圖：確保每次切過來都強制回到頂端
                 window.scrollTo({ top: 0, behavior: "smooth" });
             } else if (view === 'week') {
+                // 單週視圖：精準定位到「今天」
                 setTimeout(() => {
                     const todayEl = document.getElementById('week-today');
                     if (todayEl) {
-                        // 自動偵測頂部懸浮選單的實際高度，並多留 16px 的舒適邊距
                         const stickyHeader = document.querySelector('.sticky');
                         const headerOffset = (stickyHeader ? stickyHeader.offsetHeight : 180) + 16; 
                         const targetPos = todayEl.getBoundingClientRect().top + window.pageYOffset - headerOffset;
@@ -461,11 +461,11 @@
                     }
                 }, 50);
             } else if (view === 'year') {
+                // 年度視圖：定位到「當前月份」
                 setTimeout(() => {
                     const currentM = new Date().getMonth();
                     const el = document.getElementById(`year-month-${currentM}`);
                     if (el) {
-                        // 年度視圖也套用相同的自動偵測高度邏輯
                         const stickyHeader = document.querySelector('.sticky');
                         const headerOffset = (stickyHeader ? stickyHeader.offsetHeight : 180) + 16; 
                         window.scrollTo({ top: el.getBoundingClientRect().top + window.pageYOffset - headerOffset, behavior: "smooth" });
@@ -646,9 +646,8 @@
                     let bgClass = task.category === 'discipline' ? 'bg-blue-100 text-blue-800 border-l-2 border-blue-500' : 'bg-emerald-100 text-emerald-800 border-l-2 border-emerald-500';
                     if (task.isImportant) bgClass = 'bg-red-100 text-red-800 border-l-2 border-red-500 font-bold';
                     
-                    let iconHtml = task.category === 'discipline' ? `<span class="font-bold text-[10px] mr-0.5">生</span>` : `<span class="font-bold text-[10px] mr-0.5">體</span>`;
-                    
-                    html += `<div onclick="event.stopPropagation(); editTask('${task.id}')" class="px-1.5 py-1 sm:px-1.5 sm:py-0.5 rounded-sm sm:rounded text-[11px] sm:text-xs truncate ${bgClass} ${task.completed ? 'line-through opacity-50 grayscale' : ''}">${iconHtml}${task.title}</div>`;
+                    // 單月視圖移除了「生」、「體」前綴字眼
+                    html += `<div onclick="event.stopPropagation(); editTask('${task.id}')" class="px-1.5 py-1 sm:px-1.5 sm:py-0.5 rounded-sm sm:rounded text-[11px] sm:text-xs truncate ${bgClass} ${task.completed ? 'line-through opacity-50 grayscale' : ''}">${task.title}</div>`;
                 });
                 html += `</div></div>`;
             }
@@ -837,6 +836,8 @@
             taskToDeleteId = id; 
             const modal = document.getElementById('delete-confirm-modal');
             const content = document.getElementById('delete-confirm-content');
+            
+            // 修復淡入動畫
             modal.classList.remove('hidden');
             requestAnimationFrame(() => { 
                 content.classList.remove('modal-enter'); 
@@ -847,6 +848,8 @@
             taskToDeleteId = null; 
             const modal = document.getElementById('delete-confirm-modal');
             const content = document.getElementById('delete-confirm-content');
+            
+            // 修復淡出動畫
             content.classList.remove('modal-enter-active');
             content.classList.add('modal-exit-active');
             setTimeout(() => {
@@ -946,7 +949,6 @@
                     return;
                 }
 
-                // 處理時間的波浪號，讓他在手機上能漂漂亮亮地斷行
                 const timeParts = period.time.includes('~') ? period.time.split('~') : period.time.split('-');
                 const timeTop = timeParts[0] ? timeParts[0].trim() : '';
                 const timeBot = timeParts[1] ? timeParts[1].trim() : '';
@@ -1037,6 +1039,8 @@
         function openScheduleDeleteConfirm() {
             const modal = document.getElementById('schedule-delete-confirm-modal');
             const content = document.getElementById('schedule-delete-confirm-content');
+            
+            // 修復淡入動畫
             modal.classList.remove('hidden');
             requestAnimationFrame(() => { 
                 content.classList.remove('modal-enter'); 
@@ -1047,6 +1051,8 @@
         function closeScheduleDeleteConfirm() {
             const modal = document.getElementById('schedule-delete-confirm-modal');
             const content = document.getElementById('schedule-delete-confirm-content');
+            
+            // 修復淡出動畫
             content.classList.remove('modal-enter-active');
             content.classList.add('modal-exit-active');
             setTimeout(() => {
@@ -1145,12 +1151,50 @@
             });
         }
 
+        // === 手機版手勢滑動切換引擎 ===
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        function handleSwipeGesture() {
+            // 確保只在行事曆模式，且排除年度視圖（年度主要為上下滑動）
+            if (state.appMode !== 'calendar' || state.view === 'year') return;
+            
+            const diffX = touchStartX - touchEndX; // 大於0代表往左滑
+            const diffY = touchStartY - touchEndY;
+            
+            // 判斷是否為「橫向滑動」：X軸位移大於Y軸，且滑動距離超過 40px
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+                if (diffX > 0) {
+                    navigateDate(1);  // 向左滑 -> 前往下一月/週/日
+                } else {
+                    navigateDate(-1); // 向右滑 -> 回到上一月/週/日
+                }
+            }
+        }
+
         // 啟動初始化
         document.addEventListener('DOMContentLoaded', () => {
             updateHeaderButtons();
             renderCalendar(); 
             setInterval(checkReminders, 30000); 
             setTimeout(checkReminders, 1000);
+
+            // 綁定行事曆主區塊的手勢監聽事件
+            const calendarMain = document.getElementById('calendar-main');
+            if (calendarMain) {
+                calendarMain.addEventListener('touchstart', (e) => {
+                    touchStartX = e.changedTouches[0].screenX;
+                    touchStartY = e.changedTouches[0].screenY;
+                }, { passive: true });
+                
+                calendarMain.addEventListener('touchend', (e) => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    touchEndY = e.changedTouches[0].screenY;
+                    handleSwipeGesture();
+                }, { passive: true });
+            }
         });
     </script>
 
