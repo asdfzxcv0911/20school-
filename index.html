@@ -49,7 +49,8 @@
     </style>
 </head>
 <!-- 移除原本的 h-screen overflow-hidden，改用原生 min-h-[100dvh] 讓網頁自然往下滑 -->
-<body class="text-slate-800 bg-slate-50 min-h-[100dvh] flex flex-col relative pb-20 sm:pb-0">
+<!-- 【修正】：加入 overflow-x-hidden w-full 鎖定整體的水平滑動 -->
+<body class="text-slate-800 bg-slate-50 min-h-[100dvh] flex flex-col relative pb-20 sm:pb-0 overflow-x-hidden w-full">
 
     <!-- 統一的黏性頂部容器 (Sticky Top) - 保證不論怎麼滑都不會消失 -->
     <div class="sticky top-0 z-40 w-full shadow-sm flex flex-col">
@@ -116,13 +117,14 @@
             
             <div class="p-4 sm:p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
                 <h3 class="text-lg font-bold text-slate-800" id="modal-title">新增工作事項</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-2 -mr-2 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center">
+                <!-- 【修正】：移除了 -mr-2 避免超出邊界造成橫向捲軸 -->
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-2 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
             
-            <!-- 【關鍵修正 2】：加入 min-h-0 允許內部滾動，不再撐破版面 -->
-            <div class="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 min-h-0 overscroll-contain">
+            <!-- 【關鍵修正 2】：加入 overflow-x-hidden, overscroll-x-none 與 touch-pan-y 鎖死左右滑動，只允許上下滑動 -->
+            <div class="p-4 sm:p-5 space-y-4 overflow-y-auto overflow-x-hidden overscroll-x-none touch-pan-y flex-1 min-h-0 overscroll-contain w-full">
                 
                 <div id="status-container" class="hidden flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200">
                     <label class="text-sm font-bold text-slate-700 flex items-center gap-2 cursor-pointer w-full" for="task-completed">
