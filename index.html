@@ -454,13 +454,13 @@
             const startingDayOfWeek = firstDay.getDay(); // 0-6 (週日到週六)
             const totalDays = lastDay.getDate();
 
-            // 移除 h-full，保留 min-h-full。這樣遇到 6 週的月份時，高度會自然撐開，不會被截斷
-            let html = `<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-full">`;
+            // 移除 min-h-full，讓容器自然長高，解決手機版無法滑動的問題
+            let html = `<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">`;
             
             // 星期標題列
             html += `<div class="grid grid-cols-7 border-b border-slate-200 bg-slate-50">`;
             daysOfWeek.forEach(day => {
-                html += `<div class="py-2 text-center text-xs sm:text-sm font-bold text-slate-600">${day}</div>`;
+                html += `<div class="py-2 text-center text-[10px] sm:text-sm font-bold text-slate-600">${day}</div>`;
             });
             html += `</div>`;
 
@@ -469,7 +469,7 @@
 
             // 填補當月1號之前的空白格子
             for (let i = 0; i < startingDayOfWeek; i++) {
-                html += `<div class="border-b border-r border-slate-100 bg-slate-50/50 p-1 sm:p-2"></div>`;
+                html += `<div class="border-b border-r border-slate-100 bg-slate-50/50 p-0.5 sm:p-2 min-h-[80px] sm:min-h-[100px]"></div>`;
             }
 
             const todayStr = formatDate(new Date());
@@ -485,30 +485,26 @@
                     .filter(t => t.date === dateStr && (state.filter === 'all' || t.category === state.filter))
                     .sort((a, b) => a.time.localeCompare(b.time));
 
-                html += `<div onclick="openModal('${dateStr}')" class="border-b border-r border-slate-100 p-1 sm:p-2 flex flex-col min-h-[70px] sm:min-h-[100px] cursor-pointer hover:bg-slate-50 transition-colors relative calendar-cell ${isToday ? 'bg-indigo-50/30' : 'bg-white'}">
-                    <div class="text-center sm:text-right mb-1 flex justify-between items-center sm:block">
-                        <span class="sm:hidden w-4 h-4 text-center rounded-full text-[10px] text-slate-400 opacity-0 add-task-btn transition-opacity flex items-center justify-center bg-slate-100"><i class="fa-solid fa-plus"></i></span>
-                        <span class="inline-block w-6 h-6 text-center leading-6 rounded-full text-xs sm:text-sm ${isToday ? 'bg-indigo-600 text-white font-bold shadow-sm' : 'text-slate-700'}">${i}</span>
+                html += `<div onclick="openModal('${dateStr}')" class="border-b border-r border-slate-100 p-0.5 sm:p-2 flex flex-col min-h-[80px] sm:min-h-[100px] cursor-pointer hover:bg-slate-50 transition-colors relative calendar-cell ${isToday ? 'bg-indigo-50/30' : 'bg-white'}">
+                    <div class="text-center sm:text-right mb-0.5 flex justify-between items-center sm:block">
+                        <span class="sm:hidden w-3 h-3 text-center rounded-full text-[8px] text-slate-400 opacity-0 add-task-btn transition-opacity flex items-center justify-center bg-slate-100"><i class="fa-solid fa-plus"></i></span>
+                        <span class="inline-block w-5 h-5 sm:w-6 sm:h-6 text-center leading-5 sm:leading-6 rounded-full text-[10px] sm:text-sm ${isToday ? 'bg-indigo-600 text-white font-bold shadow-sm' : 'text-slate-700'}">${i}</span>
                     </div>
                     <div class="hidden sm:flex absolute top-2 left-2 opacity-0 add-task-btn transition-opacity text-slate-400 hover:text-indigo-600 items-center justify-center w-5 h-5 rounded hover:bg-slate-100">
                         <i class="fa-solid fa-plus text-xs"></i>
                     </div>
-                    <div class="flex-1 overflow-y-auto space-y-1 scrollbar-hide">`;
+                    <!-- 放寬手機版間距，允許滾動 -->
+                    <div class="flex-1 overflow-y-auto space-y-[1px] sm:space-y-1 scrollbar-hide pb-1">`;
                 
                 dayTasks.forEach(task => {
                     const isDiscipline = task.category === 'discipline';
                     const bgClass = isDiscipline ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800';
-                    const dotClass = isDiscipline ? 'bg-blue-500' : 'bg-emerald-500';
                     const completedClass = task.completed ? 'line-through opacity-50 grayscale' : '';
                     
                     html += `
                         <div onclick="event.stopPropagation(); editTask('${task.id}')" class="cursor-pointer group">
-                            <!-- 手機版縮略顯示 (只顯示圓點) -->
-                            <div class="sm:hidden flex flex-col items-center justify-center mb-1 hover:bg-slate-200 rounded py-0.5 ${completedClass}">
-                                <div class="w-2 h-2 rounded-full ${dotClass} mb-[2px]"></div>
-                            </div>
-                            <!-- 電腦版完整顯示 (移除時間顯示) -->
-                            <div class="hidden sm:block px-1.5 py-0.5 rounded text-xs truncate transition-colors hover:shadow-sm ${bgClass} ${completedClass}" title="${task.title}">
+                            <!-- 手機與電腦共用樣式：顯示文字背景塊 -->
+                            <div class="px-0.5 sm:px-1.5 py-[1px] sm:py-0.5 rounded-sm sm:rounded text-[9px] sm:text-xs truncate transition-colors hover:shadow-sm ${bgClass} ${completedClass}" title="${task.title}">
                                 ${task.title}
                             </div>
                         </div>
@@ -522,7 +518,7 @@
             const totalCells = startingDayOfWeek + totalDays;
             const remainingCells = (7 - (totalCells % 7)) % 7;
             for (let i = 0; i < remainingCells; i++) {
-                html += `<div class="border-b border-r border-slate-100 bg-slate-50/50 p-1 sm:p-2"></div>`;
+                html += `<div class="border-b border-r border-slate-100 bg-slate-50/50 p-0.5 sm:p-2 min-h-[80px] sm:min-h-[100px]"></div>`;
             }
 
             html += `</div></div>`;
