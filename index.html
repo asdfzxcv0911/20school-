@@ -944,60 +944,27 @@
         };
 
         function renderSchedule() {
-            renderScheduleMobileTabs();
             renderScheduleColorPicker();
             renderScheduleDesktopGrid();
-            renderScheduleMobileList();
         }
 
-        function renderScheduleMobileTabs() {
-            const container = document.getElementById('schedule-header-controls');
-            let html = '';
-            scheduleDays.forEach((day, index) => {
-                const dayNum = index + 1;
-                const isActive = dayNum === state.scheduleActiveDay;
-                const activeClass = isActive ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200';
-                html += `
-                    <button onclick="setScheduleMobileDay(${dayNum})" class="flex-1 px-2 py-2 rounded-lg text-sm font-bold transition-colors ${activeClass}">
-                        ${day.replace('星期', '週')}
-                    </button>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function setScheduleMobileDay(dayNum) {
-            state.scheduleActiveDay = dayNum;
-            renderScheduleMobileTabs();
-            renderScheduleMobileList();
-        }
-
-        function renderScheduleCell(day, periodId, isDesktop = true) {
+        function renderScheduleCell(day, periodId) {
             const key = `${day}-${periodId}`;
             const data = state.scheduleData[key];
             
             if (!data) {
-                return `<div class="h-full w-full flex items-center justify-center text-slate-300 text-sm border-2 border-dashed border-transparent hover:border-slate-200 rounded-lg transition-colors cursor-pointer" onclick="openScheduleModal(${day}, '${periodId}')">
-                    <i class="fa-solid fa-plus opacity-0 group-hover:opacity-100 md:opacity-0 transition-opacity"></i>
-                    <span class="md:hidden opacity-50 ml-2">點擊新增</span>
+                return `<div class="h-full w-full flex items-center justify-center text-slate-300 text-[10px] sm:text-sm border-2 border-dashed border-transparent hover:border-slate-200 rounded sm:rounded-lg transition-colors cursor-pointer group" onclick="openScheduleModal(${day}, '${periodId}')">
+                    <i class="fa-solid fa-plus opacity-0 group-hover:opacity-100 transition-opacity"></i>
                 </div>`;
             }
 
             const colorTheme = scheduleColors[data.color] || scheduleColors['gray'];
             
-            if (isDesktop) {
-                return `
-                <div class="h-full w-full rounded-lg ${colorTheme.bg} ${colorTheme.border} border p-2 flex flex-col justify-center cursor-pointer hover:shadow-md transition-all active:scale-95" onclick="openScheduleModal(${day}, '${periodId}')">
-                    <div class="font-bold text-[15px] ${colorTheme.text} leading-tight truncate text-center">${data.name}</div>
-                    ${data.location ? `<div class="text-[11px] ${colorTheme.text} opacity-80 mt-1 truncate text-center"><i class="fa-solid fa-location-dot mr-1"></i>${data.location}</div>` : ''}
-                </div>`;
-            } else {
-                return `
-                <div class="flex-1 rounded-xl ${colorTheme.bg} ${colorTheme.border} border p-3 flex flex-col justify-center cursor-pointer active:bg-opacity-70 transition-colors" onclick="openScheduleModal(${day}, '${periodId}')">
-                    <div class="font-bold text-base ${colorTheme.text}">${data.name}</div>
-                    ${data.location ? `<div class="text-[13px] ${colorTheme.text} opacity-80 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${data.location}</div>` : ''}
-                </div>`;
-            }
+            return `
+            <div class="h-full w-full rounded sm:rounded-lg ${colorTheme.bg} ${colorTheme.border} border p-0.5 sm:p-2 flex flex-col justify-center items-center cursor-pointer hover:shadow-md transition-all active:scale-95 overflow-hidden" onclick="openScheduleModal(${day}, '${periodId}')">
+                <div class="font-bold text-[10px] sm:text-[15px] ${colorTheme.text} leading-tight text-center break-words w-full whitespace-normal line-clamp-2">${data.name}</div>
+                ${data.location ? `<div class="text-[8px] sm:text-[11px] ${colorTheme.text} opacity-80 mt-0.5 sm:mt-1 text-center truncate w-full flex justify-center items-center"><i class="fa-solid fa-location-dot sm:mr-1 mr-0.5"></i><span class="truncate">${data.location}</span></div>` : ''}
+            </div>`;
         }
 
         function renderScheduleDesktopGrid() {
@@ -1008,59 +975,31 @@
                 if (period.isBreak) {
                     html += `
                     <div class="flex border-b border-slate-200 bg-slate-100/50">
-                        <div class="w-1/6 p-3 flex flex-col items-center justify-center border-r border-slate-200 text-slate-500">
-                            <span class="font-bold text-sm">${period.name}</span>
-                            <span class="text-xs opacity-70">${period.time}</span>
+                        <div class="w-1/6 p-1 sm:p-3 flex flex-col items-center justify-center border-r border-slate-200 text-slate-500">
+                            <span class="font-bold text-[11px] sm:text-sm text-center leading-tight">午餐<br class="sm:hidden">午休</span>
+                            <span class="text-[8px] sm:text-xs opacity-70 mt-0.5 hidden sm:block">${period.time}</span>
                         </div>
-                        <div class="w-5/6 p-3 flex items-center justify-center text-slate-400 font-medium tracking-[1em] text-sm">REST TIME</div>
+                        <div class="w-5/6 p-2 sm:p-3 flex items-center justify-center text-slate-400 font-bold sm:font-medium tracking-[0.2em] sm:tracking-[1em] text-[10px] sm:text-sm">REST TIME</div>
                     </div>`;
                     return;
                 }
 
-                html += `<div class="flex border-b border-slate-100 last:border-b-0 min-h-[90px]">
-                    <div class="w-1/6 p-2 flex flex-col items-center justify-center border-r border-slate-200 bg-slate-50">
-                        <span class="font-bold text-slate-700 text-[15px]">${period.name}</span>
-                        <span class="text-[11px] text-slate-400 mt-1">${period.time}</span>
+                const timeParts = period.time.split(' - ');
+
+                html += `<div class="flex border-b border-slate-100 last:border-b-0 min-h-[50px] sm:min-h-[90px]">
+                    <div class="w-1/6 p-1 sm:p-2 flex flex-col items-center justify-center border-r border-slate-200 bg-slate-50">
+                        <span class="font-bold text-slate-700 text-[11px] sm:text-[15px] text-center leading-tight whitespace-nowrap">${period.name}</span>
+                        <span class="text-[8px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 text-center leading-tight hidden sm:block">${period.time}</span>
+                        <span class="text-[8px] text-slate-400 mt-0.5 text-center leading-tight sm:hidden">${timeParts[0]}<br>-<br>${timeParts[1]}</span>
                     </div>`;
                 
                 for (let day = 1; day <= 5; day++) {
                     html += `
-                    <div class="w-1/6 p-1.5 border-r border-slate-100 last:border-r-0 group">
-                        ${renderScheduleCell(day, period.id, true)}
+                    <div class="w-1/6 p-0.5 sm:p-1.5 border-r border-slate-100 last:border-r-0">
+                        ${renderScheduleCell(day, period.id)}
                     </div>`;
                 }
                 html += `</div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        function renderScheduleMobileList() {
-            const container = document.getElementById('mobile-list');
-            let html = `<div class="bg-indigo-50 border-l-4 border-indigo-500 p-3 rounded-lg text-indigo-800 font-bold mb-4 shadow-sm flex items-center justify-between">
-                <span>目前顯示：${scheduleDays[state.scheduleActiveDay - 1]}</span>
-            </div>`;
-            
-            schedulePeriods.forEach(period => {
-                if (period.isBreak) {
-                    html += `
-                    <div class="flex items-center gap-3 bg-slate-100/50 p-2 rounded-xl border border-slate-200 border-dashed my-2">
-                        <div class="w-20 shrink-0 text-center text-slate-500">
-                            <i class="fa-solid fa-mug-hot text-lg mb-1"></i>
-                            <div class="text-[10px] opacity-70">${period.time}</div>
-                        </div>
-                        <div class="flex-1 text-slate-400 font-bold tracking-widest text-center">${period.name}</div>
-                    </div>`;
-                    return;
-                }
-
-                html += `
-                <div class="flex items-stretch gap-3 min-h-[76px]">
-                    <div class="w-20 shrink-0 flex flex-col items-center justify-center bg-white rounded-xl shadow-sm border border-slate-200">
-                        <span class="font-bold text-slate-700 text-sm">${period.name}</span>
-                        <span class="text-[10px] text-slate-400 mt-0.5">${period.time}</span>
-                    </div>
-                    ${renderScheduleCell(state.scheduleActiveDay, period.id, false)}
-                </div>`;
             });
             container.innerHTML = html;
         }
@@ -1154,12 +1093,10 @@
             if (window.cloudUpdateSchedule) await window.cloudUpdateSchedule(state.scheduleData);
 
             renderScheduleDesktopGrid();
-            renderScheduleMobileList();
             closeScheduleModal();
             showToast('已更新課表');
         }
 
-        // 修改：先跳出確認視窗，不直接刪除
         function clearCourse() {
             if (!state.scheduleEditingSlot) return;
             openScheduleDeleteConfirm();
@@ -1173,9 +1110,8 @@
             if (window.cloudUpdateSchedule) await window.cloudUpdateSchedule(state.scheduleData);
 
             renderScheduleDesktopGrid();
-            renderScheduleMobileList();
-            closeScheduleDeleteConfirm(); // 關閉確認視窗
-            closeScheduleModal();       // 關閉編輯視窗
+            closeScheduleDeleteConfirm(); 
+            closeScheduleModal();       
             showToast('已清除該節課');
         }
 
