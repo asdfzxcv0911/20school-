@@ -171,6 +171,14 @@
                     </div>
                 </div>
 
+                <!-- 新增：重要事項標記 -->
+                <div class="bg-red-50 p-3 rounded-lg border border-red-200 flex items-center justify-between mt-1">
+                    <label class="text-sm font-bold text-red-700 flex items-center gap-2 cursor-pointer w-full" for="task-important">
+                        <i class="fa-solid fa-triangle-exclamation text-lg"></i> 標記為重要事項
+                    </label>
+                    <input type="checkbox" id="task-important" class="w-6 h-6 rounded border-red-300 text-red-600 focus:ring-red-500 cursor-pointer">
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">日期</label>
@@ -375,9 +383,17 @@
             } else {
                 dayTasks.forEach(task => {
                     const isDiscipline = task.category === 'discipline';
-                    const colorClass = isDiscipline ? 'category-discipline' : 'category-pe';
-                    const textClass = isDiscipline ? 'text-blue-700' : 'text-emerald-700';
-                    const icon = isDiscipline ? '<i class="fa-solid fa-shield-halved"></i>' : '<i class="fa-solid fa-volleyball"></i>';
+                    const isImportant = task.isImportant;
+                    
+                    let colorClass = isDiscipline ? 'category-discipline' : 'category-pe';
+                    let textClass = isDiscipline ? 'text-blue-700' : 'text-emerald-700';
+                    let icon = isDiscipline ? '<i class="fa-solid fa-shield-halved"></i>' : '<i class="fa-solid fa-volleyball"></i>';
+                    
+                    if (isImportant) {
+                        colorClass = 'border-l-red-500 bg-red-50';
+                        textClass = 'text-red-700 font-bold';
+                        icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
+                    }
                     
                     const completedStyle = task.completed ? 'line-through text-slate-400' : 'text-slate-800';
                     const wrapperStyle = task.completed ? 'opacity-60 grayscale' : '';
@@ -448,7 +464,13 @@
                 } else {
                     dayTasks.forEach(task => {
                         const isDiscipline = task.category === 'discipline';
-                        const colorClass = isDiscipline ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800';
+                        const isImportant = task.isImportant;
+                        
+                        let colorClass = isDiscipline ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800';
+                        if (isImportant) {
+                            colorClass = 'bg-red-50 border-red-300 text-red-800 font-bold shadow-sm';
+                        }
+                        
                         const completedClass = task.completed ? 'line-through opacity-50 grayscale' : '';
                         
                         html += `
@@ -512,7 +534,13 @@
                 
                 dayTasks.forEach(task => {
                     const isDiscipline = task.category === 'discipline';
-                    const bgClass = isDiscipline ? 'bg-blue-100 text-blue-800 border-l-2 border-blue-500' : 'bg-emerald-100 text-emerald-800 border-l-2 border-emerald-500';
+                    const isImportant = task.isImportant;
+                    
+                    let bgClass = isDiscipline ? 'bg-blue-100 text-blue-800 border-l-2 border-blue-500' : 'bg-emerald-100 text-emerald-800 border-l-2 border-emerald-500';
+                    if (isImportant) {
+                        bgClass = 'bg-red-100 text-red-800 border-l-2 border-red-500 font-bold';
+                    }
+                    
                     const completedClass = task.completed ? 'line-through opacity-50 grayscale' : '';
                     
                     html += `
@@ -588,8 +616,14 @@
                     monthTasks.forEach(task => {
                         const dateObj = new Date(task.date);
                         const dayStr = String(dateObj.getDate()).padStart(2, '0');
+                        const isImportant = task.isImportant;
+                        
                         const prefixText = task.category === 'discipline' ? '生教' : '體育';
-                        const prefixColor = task.category === 'discipline' ? 'text-blue-700 bg-blue-50 border-blue-200 print:text-black print:bg-transparent' : 'text-emerald-700 bg-emerald-50 border-emerald-200 print:text-black print:bg-transparent';
+                        let prefixColor = task.category === 'discipline' ? 'text-blue-700 bg-blue-50 border-blue-200 print:text-black print:bg-transparent' : 'text-emerald-700 bg-emerald-50 border-emerald-200 print:text-black print:bg-transparent';
+                        if (isImportant) {
+                            prefixColor = 'text-red-700 bg-red-100 border-red-300 print:text-black print:bg-transparent font-bold';
+                        }
+                        
                         const completedClass = task.completed ? 'line-through opacity-60 print:opacity-100' : '';
                         
                         html += `
@@ -685,6 +719,7 @@
             document.getElementById('task-memo').value = '';
             
             document.querySelector('input[name="task-category"][value="discipline"]').checked = true;
+            document.getElementById('task-important').checked = false;
             document.getElementById('task-remind-toggle').checked = false;
             
             document.getElementById('task-completed').checked = false;
@@ -742,6 +777,7 @@
             document.getElementById('task-date').value = task.date;
             document.getElementById('task-time').value = task.time;
             document.querySelector(`input[name="task-category"][value="${task.category}"]`).checked = true;
+            document.getElementById('task-important').checked = task.isImportant || false;
             
             document.getElementById('status-container').classList.remove('hidden');
             document.getElementById('task-completed').checked = task.completed || false;
@@ -784,6 +820,7 @@
             const date = document.getElementById('task-date').value;
             const time = document.getElementById('task-time').value;
             const category = document.querySelector('input[name="task-category"]:checked').value;
+            const isImportant = document.getElementById('task-important').checked;
             const remind = document.getElementById('task-remind-toggle').checked;
             const remindTime = parseInt(document.getElementById('task-remind-time').value);
             const repeat = document.getElementById('task-repeat').value;
@@ -796,7 +833,7 @@
 
             try {
                 if (state.editingTaskId) {
-                    const updatedData = { title, date, time, category, remind, remindTime, repeat, completed, notified: false, location, memo };
+                    const updatedData = { title, date, time, category, isImportant, remind, remindTime, repeat, completed, notified: false, location, memo };
                     if (window.cloudUpdateTask) {
                         await window.cloudUpdateTask(state.editingTaskId, updatedData);
                     } else {
@@ -808,7 +845,7 @@
                 } else {
                     const newTask = {
                         id: Date.now().toString(),
-                        title, date, time, category, remind, remindTime, repeat, completed, notified: false, location, memo
+                        title, date, time, category, isImportant, remind, remindTime, repeat, completed, notified: false, location, memo
                     };
                     if (window.cloudAddTask) {
                         await window.cloudAddTask(newTask);
