@@ -75,7 +75,12 @@
                 <div class="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-between sm:justify-start">
                     <div class="flex items-center gap-1 sm:gap-2">
                         <button onclick="changeDate(-1)" class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
-                        <h2 id="current-date-display" class="text-lg sm:text-xl font-bold text-slate-800 min-w-[130px] text-center">2026年 8月</h2>
+                        
+                        <div class="relative inline-block cursor-pointer group">
+                            <h2 id="current-date-display" class="text-lg sm:text-xl font-bold text-slate-800 min-w-[130px] text-center group-hover:text-indigo-600 transition-colors">2026年 8月</h2>
+                            <input type="date" id="date-picker-input" onchange="jumpToDate(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" style="-webkit-appearance: none; appearance: none;">
+                        </div>
+
                         <button onclick="changeDate(1)" class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors active:scale-95"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                     <!-- 改為房子與單月清單圖示 -->
@@ -796,7 +801,18 @@
                     if (hasTask) {
                         let taskList = dayTasks.map(t => `<div class="truncate text-left">▪ ${t.title}</div>`).join('');
                         let tooltip = `<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 w-max max-w-[150px] p-2 bg-slate-800/95 backdrop-blur-sm text-white text-[10px] leading-relaxed rounded-md shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[60] pointer-events-none">${taskList}</div>`;
-                        html += `<div class="${cls}" onclick="event.stopPropagation()">${i}<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-amber-500 rounded-full"></span>${tooltip}</div>`;
+                        
+                        // 判斷當天有哪些任務類別，並蒐集對應顏色
+                        let dots = new Set();
+                        dayTasks.forEach(t => {
+                            if (t.isImportant) dots.add('bg-red-500');
+                            if (t.category === 'discipline') dots.add('bg-blue-500');
+                            else if (t.category === 'pe') dots.add('bg-emerald-500');
+                            else if (t.category === 'other') dots.add('bg-purple-500');
+                        });
+                        let dotsHtml = Array.from(dots).map(color => `<span class="w-1 h-1 rounded-full ${color}"></span>`).join('');
+                        
+                        html += `<div class="${cls}" onclick="event.stopPropagation()">${i}<div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 flex items-center justify-center gap-[1px] w-full">${dotsHtml}</div>${tooltip}</div>`;
                     } else {
                         html += `<div class="${cls}">${i}</div>`;
                     }
