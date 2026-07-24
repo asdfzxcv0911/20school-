@@ -75,7 +75,13 @@
                 <div class="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-between sm:justify-start">
                     <div class="flex items-center gap-1 sm:gap-2">
                         <button onclick="changeDate(-1)" class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
-                        <h2 id="current-date-display" class="text-lg sm:text-xl font-bold text-slate-800 min-w-[130px] text-center">2026年 8月</h2>
+                        
+                        <!-- 加入隱形日期選擇器，包覆在文字上方 -->
+                        <div class="relative cursor-pointer group flex items-center justify-center">
+                            <h2 id="current-date-display" class="text-lg sm:text-xl font-bold text-slate-800 min-w-[130px] text-center group-hover:text-indigo-600 transition-colors" title="點擊選擇日期">2026年 8月</h2>
+                            <input type="date" id="date-picker-input" onchange="jumpToDate(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer m-0 p-0 z-10">
+                        </div>
+                        
                         <button onclick="changeDate(1)" class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors active:scale-95"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                     <!-- 改為房子與單月清單圖示 -->
@@ -496,6 +502,14 @@
             autoScroll();
         }
 
+        function jumpToDate(dateString) {
+            if (!dateString) return;
+            const [y, m, d] = dateString.split('-');
+            state.currentDate = new Date(y, m - 1, d);
+            renderCalendar();
+            autoScroll();
+        }
+
         function getTasksForDate(dateStr) {
             return state.tasks.filter(t => t.date === dateStr);
         }
@@ -509,6 +523,10 @@
             const year = state.currentDate.getFullYear();
             const month = state.currentDate.getMonth();
             const date = state.currentDate.getDate();
+
+            // 確保隱形選單的值與當前畫面同步
+            const datePicker = document.getElementById('date-picker-input');
+            if (datePicker) datePicker.value = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
 
             if (state.view === 'month') {
                 dateDisplay.innerText = `${year}年 ${month + 1}月`;
