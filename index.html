@@ -430,6 +430,23 @@
             checkReminders();
         };
 
+        function autoScroll() {
+            setTimeout(() => {
+                // 尋找畫面中是否有「今天」的格子
+                const todayEl = document.querySelector('.bg-indigo-50.border-indigo-200') || document.querySelector('.bg-indigo-50\\/30');
+                if (todayEl) {
+                    // 如果有今天，將畫面捲動定位至今天的位置
+                    const topNavHeight = document.getElementById('top-nav-bar').offsetHeight;
+                    const elementPosition = todayEl.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - topNavHeight - 10;
+                    window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+                } else {
+                    // 如果沒有今天 (別的月份或週次)，則回到最頂部
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+            }, 100);
+        }
+
         function setView(view) {
             state.view = view;
             document.querySelectorAll('#view-day, #view-week, #view-month, #view-year').forEach(btn => {
@@ -441,28 +458,17 @@
             activeBtn.classList.add('bg-white', 'shadow-sm', 'text-slate-700');
             
             // 按鈕顯示邏輯
-            document.getElementById('month-list-btn-container').classList.add('hidden');
-            document.getElementById('year-list-btn-container').classList.add('hidden');
+            const headerMonthBtn = document.getElementById('month-list-btn-header');
+            if (headerMonthBtn) headerMonthBtn.classList.add('hidden');
             
-            if (view === 'month') document.getElementById('month-list-btn-container').classList.remove('hidden');
-            if (view === 'year') document.getElementById('year-list-btn-container').classList.remove('hidden');
+            const yearListBtn = document.getElementById('year-list-btn-container');
+            if (yearListBtn) yearListBtn.classList.add('hidden');
+            
+            if (view === 'month' && headerMonthBtn) headerMonthBtn.classList.remove('hidden');
+            if (view === 'year' && yearListBtn) yearListBtn.classList.remove('hidden');
             
             renderCalendar();
-
-            // 精準定位，避免被上方選單蓋住
-            if (view === 'week' || view === 'day') {
-                setTimeout(() => {
-                    const todayEl = document.querySelector('.bg-indigo-50.border-indigo-200') || document.querySelector('.bg-indigo-50\\/30');
-                    if (todayEl) {
-                        const topNavHeight = document.getElementById('top-nav-bar').offsetHeight;
-                        const calendarHeaderHeight = document.getElementById('calendar-header-controls').offsetHeight;
-                        const totalOffset = topNavHeight + calendarHeaderHeight;
-                        const elementPosition = todayEl.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - totalOffset - 10;
-                        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-                    }
-                }, 100);
-            }
+            autoScroll();
         }
 
         function changeDate(delta) {
@@ -473,11 +479,13 @@
             else if (state.view === 'year') newDate.setFullYear(newDate.getFullYear() + delta);
             state.currentDate = newDate;
             renderCalendar();
+            autoScroll();
         }
 
         function goToToday() {
             state.currentDate = new Date();
             renderCalendar();
+            autoScroll();
         }
 
         function getTasksForDate(dateStr) {
