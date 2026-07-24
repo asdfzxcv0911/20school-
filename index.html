@@ -620,7 +620,7 @@
                 dateHeaderHtml += `</div>`;
 
                 const tasks = getTasksForDate(dateStr);
-                let tasksHtml = '<div class="space-y-1">';
+                let tasksHtml = '<div class="space-y-0.5 sm:space-y-1">';
                 tasks.forEach(task => {
                     const conf = categoryConfig[task.category];
                     const starIcon = task.isImportant ? '<i class="fa-solid fa-star text-amber-400 text-[10px] ml-0.5"></i>' : '';
@@ -628,11 +628,12 @@
                     const locIcon = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="hover:text-indigo-600 transition-colors" title="在 Google Maps 開啟"><i class="fa-solid fa-map-location-dot text-slate-400 text-[10px] ml-0.5"></i></a>` : '';
                     const imgIcon = task.imageUrl ? `<i class="fa-solid fa-image text-indigo-400 text-[10px] ml-0.5"></i>` : '';
                     
-                    // 單月視圖：不顯示生、體字首，讓空間極大化，標題直接緊連圖示
+                    // 針對手機版優化：縮小邊距、隱藏地圖/圖片圖示以換取文字空間，文字稍微縮緊，星號改極小
                     tasksHtml += `
-                        <div onclick="editTask('${task.id}')" class="truncate text-[10px] sm:text-xs px-1.5 sm:px-2 py-1 rounded border transition-transform hover:scale-[102%] cursor-pointer flex items-center shadow-sm ${completedClass}">
-                            <span class="truncate font-bold flex-1">${task.title}</span>
-                            <div class="flex items-center shrink-0 ml-1 z-10">${locIcon}${imgIcon}${starIcon}</div>
+                        <div onclick="editTask('${task.id}')" class="truncate text-[10px] sm:text-xs px-0.5 sm:px-1.5 py-0.5 sm:py-1 rounded border transition-transform hover:scale-[102%] cursor-pointer flex items-center shadow-sm overflow-hidden ${completedClass}">
+                            <span class="truncate font-bold flex-1 text-center sm:text-left tracking-tighter sm:tracking-normal">${task.title}</span>
+                            <div class="hidden sm:flex items-center shrink-0 ml-1 z-10">${locIcon}${imgIcon}${starIcon}</div>
+                            ${task.isImportant ? '<span class="sm:hidden text-amber-500 ml-0.5 text-[8px] shrink-0">★</span>' : ''}
                         </div>
                     `;
                 });
