@@ -106,13 +106,13 @@
         <!-- 課表專屬：多重課表切換列 -->
         <div id="schedule-header-controls" class="hidden flex-col">
             <div class="bg-white border-b border-slate-200 px-3 sm:px-4 py-2.5 flex justify-center items-center">
-                <div class="relative inline-flex items-center bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg px-4 py-2 cursor-pointer shadow-sm border border-indigo-100 w-full sm:w-auto max-w-[280px]">
-                    <select id="schedule-selector" onchange="onScheduleSelectChange()" class="bg-transparent text-indigo-900 font-bold text-[15px] sm:text-base outline-none cursor-pointer appearance-none pr-7 relative z-10 w-full text-center">
+                <div class="relative inline-flex items-center bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg px-3 py-2 cursor-pointer shadow-sm border border-indigo-100 w-fit mx-auto">
+                    <select id="schedule-selector" onchange="onScheduleSelectChange()" class="bg-transparent text-indigo-900 font-bold text-[15px] sm:text-base outline-none cursor-pointer appearance-none pr-6 relative z-10 w-auto text-center">
                         <option value="my_weekly_schedule">🧑‍🏫 我的專屬課表</option>
                         <option value="office_weekly_schedule">🏢 學務處課表</option>
                         <option value="son_weekly_schedule">👦 兒子課表</option>
                     </select>
-                    <i class="fa-solid fa-chevron-down text-indigo-500 absolute right-4 text-sm pointer-events-none z-0"></i>
+                    <i class="fa-solid fa-chevron-down text-indigo-500 absolute right-3.5 text-sm pointer-events-none z-0"></i>
                 </div>
             </div>
         </div>
@@ -1345,8 +1345,8 @@
                             // 拿掉 border 與 bg-white，僅留 padding 與滑鼠 hover 的極淡背景
                             html += `
                             <div onclick="openScheduleModal(${day}, '${period.id}', ${index})" class="w-full rounded py-1 px-0 flex flex-col justify-center items-center hover:bg-slate-100/60 transition-colors active:scale-95 cursor-pointer overflow-hidden">
-                                <div class="font-bold text-[9px] min-[390px]:text-[10px] sm:text-[14px] ${colorTheme.text} leading-none sm:leading-tight text-center whitespace-nowrap tracking-tighter sm:tracking-normal w-full overflow-hidden text-ellipsis">${data.name}</div>
-                                ${data.location ? `<div class="text-[8px] sm:text-[11px] ${colorTheme.text} opacity-80 whitespace-nowrap tracking-tighter sm:tracking-normal text-center w-full overflow-hidden text-ellipsis"><i class="fa-solid fa-location-dot mr-0.5 hidden sm:inline-block"></i>${data.location}</div>` : ''}
+                                <div class="font-bold text-[8.5px] min-[390px]:text-[9px] sm:text-[14px] ${colorTheme.text} leading-none sm:leading-tight text-center whitespace-nowrap tracking-tighter sm:tracking-normal w-full overflow-hidden text-ellipsis">${data.name}</div>
+                                ${data.location ? `<div class="text-[7.5px] sm:text-[11px] ${colorTheme.text} opacity-80 whitespace-nowrap tracking-tighter sm:tracking-normal text-center w-full overflow-hidden text-ellipsis"><i class="fa-solid fa-location-dot mr-0.5 hidden sm:inline-block"></i>${data.location}</div>` : ''}
                             </div>`;
                         });
                         html += `</div>`;
