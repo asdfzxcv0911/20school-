@@ -958,30 +958,49 @@
                     html += `<div class="p-3 text-center text-slate-400 bg-slate-50/50 rounded-xl border border-slate-200 border-dashed italic text-sm">本月份尚無紀錄</div>`;
                 } else {
                     html += `<div class="space-y-3">`;
+                    
+                    // 將同日期的事項群組化
+                    const tasksByDate = {};
                     monthTasks.forEach(t => {
-                        const day = parseInt(t.date.split('-')[2]);
-                        const conf = categoryConfig[t.category];
-                        const star = t.isImportant ? '<i class="fa-solid fa-star text-amber-400 ml-1"></i>' : '';
-                        const loc = t.location ? `<span class="text-sm text-slate-500 ml-2 font-medium"><i class="fa-solid fa-map-location-dot mr-1.5 text-slate-400"></i>${t.location}</span>` : '';
-                        const doneClass = t.isCompleted ? 'line-through text-slate-400' : 'text-slate-800';
-                        const bgClass = t.isCompleted ? 'bg-slate-50' : 'bg-white';
+                        if (!tasksByDate[t.date]) tasksByDate[t.date] = [];
+                        tasksByDate[t.date].push(t);
+                    });
 
+                    Object.keys(tasksByDate).forEach(dateStr => {
+                        const dayTasks = tasksByDate[dateStr];
+                        const day = parseInt(dateStr.split('-')[2]);
+                        
                         html += `
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-4 p-3 ${bgClass} rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all" onclick="editDateFromYearList('${t.date}', '${t.id}')">
-                            <div class="w-16 shrink-0 text-center bg-slate-50 rounded-lg py-3 border border-slate-200 flex items-center justify-center">
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 bg-white rounded-xl border border-slate-200 shadow-sm transition-all print:shadow-none print:border-b print:rounded-none">
+                            <!-- 顯示一次日期，點擊可新增該日事項 -->
+                            <div class="w-16 shrink-0 text-center bg-slate-50 rounded-lg py-3 border border-slate-200 flex items-center justify-center self-start cursor-pointer hover:bg-indigo-50 transition-colors print:border-none print:bg-transparent" onclick="editDateFromYearList('${dateStr}', null)" title="點擊新增本日事項">
                                 <span class="block text-2xl font-black text-slate-700 leading-none">${day}</span>
                             </div>
-                            <div class="flex-1 min-w-0 flex flex-col justify-center">
-                                <div class="flex items-center gap-2 flex-wrap mb-1">
-                                    <span class="px-2 py-0.5 rounded text-white text-[10px] font-bold shadow-sm ${t.isCompleted ? 'bg-slate-400' : conf.dot}">${conf.label}</span>
-                                    <span class="font-bold text-base sm:text-lg ${doneClass} break-words">${t.title}${star}</span>
-                                </div>
-                                <div class="flex items-center mt-1">
-                                    ${loc}
-                                </div>
+                            
+                            <!-- 同日期的事項列表 -->
+                            <div class="flex-1 min-w-0 flex flex-col justify-center gap-1.5 sm:gap-1">`;
+                            
+                        dayTasks.forEach(t => {
+                            const conf = categoryConfig[t.category];
+                            const star = t.isImportant ? '<i class="fa-solid fa-star text-amber-400 ml-1"></i>' : '';
+                            const loc = t.location ? `<span class="text-sm text-slate-500 ml-2 font-medium"><i class="fa-solid fa-map-location-dot mr-1.5 text-slate-400"></i>${t.location}</span>` : '';
+                            const doneClass = t.isCompleted ? 'line-through text-slate-400' : 'text-slate-800';
+                            
+                            html += `
+                                <div class="flex flex-col justify-center p-2 -mx-2 rounded-lg cursor-pointer hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors print:hover:bg-transparent print:-mx-0 print:p-1" onclick="editDateFromYearList('${t.date}', '${t.id}')">
+                                    <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                                        <span class="px-2 py-0.5 rounded text-white text-[10px] font-bold shadow-sm ${t.isCompleted ? 'bg-slate-400' : conf.dot} print:shadow-none">${conf.label}</span>
+                                        <span class="font-bold text-base sm:text-lg ${doneClass} break-words">${t.title}${star}</span>
+                                    </div>
+                                    ${t.location ? `<div class="flex items-center mt-0.5">${loc}</div>` : ''}
+                                </div>`;
+                        });
+                        
+                        html += `
                             </div>
                         </div>`;
                     });
+                    
                     html += `</div>`;
                 }
                 html += `</div>`;
@@ -1325,9 +1344,9 @@
                             const colorTheme = scheduleColors[data.color] || scheduleColors['gray'];
                             // 拿掉 border 與 bg-white，僅留 padding 與滑鼠 hover 的極淡背景
                             html += `
-                            <div onclick="openScheduleModal(${day}, '${period.id}', ${index})" class="w-full rounded p-0.5 sm:p-1 flex flex-col justify-center items-center hover:bg-slate-100/60 transition-colors active:scale-95 cursor-pointer">
-                                <div class="font-bold text-[10px] sm:text-[13px] ${colorTheme.text} leading-tight text-center break-words w-full px-0.5">${data.name}</div>
-                                ${data.location ? `<div class="text-[8px] sm:text-[10px] ${colorTheme.text} opacity-80 truncate text-center w-full"><i class="fa-solid fa-location-dot mr-0.5"></i>${data.location}</div>` : ''}
+                            <div onclick="openScheduleModal(${day}, '${period.id}', ${index})" class="w-full rounded py-1 px-0 flex flex-col justify-center items-center hover:bg-slate-100/60 transition-colors active:scale-95 cursor-pointer overflow-hidden">
+                                <div class="font-bold text-[9px] min-[390px]:text-[10px] sm:text-[14px] ${colorTheme.text} leading-none sm:leading-tight text-center whitespace-nowrap tracking-tighter sm:tracking-normal w-full overflow-hidden text-ellipsis">${data.name}</div>
+                                ${data.location ? `<div class="text-[8px] sm:text-[11px] ${colorTheme.text} opacity-80 whitespace-nowrap tracking-tighter sm:tracking-normal text-center w-full overflow-hidden text-ellipsis"><i class="fa-solid fa-location-dot mr-0.5 hidden sm:inline-block"></i>${data.location}</div>` : ''}
                             </div>`;
                         });
                         html += `</div>`;
