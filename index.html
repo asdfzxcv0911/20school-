@@ -43,7 +43,7 @@
 </head>
 <body class="bg-slate-50 min-h-[100dvh] flex flex-col text-slate-800">
 
-    <!-- 專屬列印區塊 (平時隱藏，按下印表機時才會顯示並覆蓋全螢幕) -->
+    <!-- 專屬列印區塊 -->
     <div id="print-area" class="hidden print:block w-full bg-white z-[99999] absolute top-0 left-0 p-4 sm:p-8 min-h-screen">
         <!-- 內容由 JS 動態填入 -->
     </div>
@@ -83,7 +83,7 @@
 
                         <button onclick="changeDate(1)" class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors active:scale-95"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
-                    <!-- 改為房子與單月清單圖示 -->
+                    <!-- 房子與單月清單圖示 -->
                     <div class="flex items-center gap-1">
                         <button onclick="goToToday()" class="px-3 py-1.5 text-lg font-medium rounded-md text-indigo-600 hover:bg-indigo-50 transition-colors active:scale-95 flex items-center justify-center" title="回到今天">
                             <i class="fa-solid fa-house"></i>
@@ -105,22 +105,23 @@
         
         <!-- 課表專屬：多重課表切換列 -->
         <div id="schedule-header-controls" class="hidden flex-col">
-            <div class="bg-white border-b border-slate-200 px-3 sm:px-4 py-2.5 flex justify-center items-center">
-                <div class="relative inline-flex items-center bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg px-3 py-2 cursor-pointer shadow-sm border border-indigo-100 w-fit mx-auto">
-                    <select id="schedule-selector" onchange="onScheduleSelectChange()" class="bg-transparent text-indigo-900 font-bold text-[15px] sm:text-base outline-none cursor-pointer appearance-none pr-6 relative z-10 w-auto text-center">
-                        <option value="my_weekly_schedule">🧑‍🏫 我的專屬課表</option>
-                        <option value="office_weekly_schedule">🏢 學務處課表</option>
-                        <option value="son_weekly_schedule">👦 兒子課表</option>
+            <div class="bg-white border-b border-slate-200 px-3 py-2.5 flex justify-center items-center gap-2">
+                <div class="relative inline-flex items-center bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg px-2 py-1.5 cursor-pointer shadow-sm border border-indigo-100 w-fit">
+                    <select id="schedule-selector" onchange="onScheduleSelectChange()" class="bg-transparent text-indigo-900 font-bold text-[15px] sm:text-base outline-none cursor-pointer appearance-none pr-6 relative z-10 text-center">
+                        <!-- 選項由 JS 動態生成 -->
                     </select>
-                    <i class="fa-solid fa-chevron-down text-indigo-500 absolute right-3.5 text-sm pointer-events-none z-0"></i>
+                    <i class="fa-solid fa-chevron-down text-indigo-500 absolute right-2 text-sm pointer-events-none z-0"></i>
                 </div>
+                <!-- 刪除自訂課表按鈕 (平時隱藏) -->
+                <button id="btn-delete-schedule" onclick="deleteCustomSchedule()" class="hidden w-9 h-9 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除此課表">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             </div>
         </div>
     </div>
 
     <!-- 行事曆主內容區 -->
     <main id="calendar-main" class="flex-1 w-full max-w-6xl mx-auto p-3 sm:p-6 pb-24 relative print:hidden">
-
         <!-- 年度右上角：年度總表清單按鈕 -->
         <div id="year-list-btn-container" class="hidden absolute top-4 sm:top-7 right-4 sm:right-7 z-10">
             <button onclick="openYearlyListModal()" class="bg-indigo-600 text-white hover:bg-indigo-700 px-3 py-1.5 rounded-lg shadow-sm text-sm font-bold flex items-center gap-1.5 transition-colors border border-indigo-700 shadow-md">
@@ -133,7 +134,7 @@
         </div>
     </main>
 
-    <!-- 課表主內容區 (全裝置強制顯示網格) -->
+    <!-- 課表主內容區 -->
     <main id="schedule-main" class="hidden flex-1 w-full max-w-6xl mx-auto p-1.5 sm:p-6 pb-20 print:hidden">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="flex border-b border-slate-200 bg-slate-50 font-bold text-slate-600 text-[11px] sm:text-base">
@@ -236,7 +237,8 @@
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">事項內容</label>
-                    <input type="text" id="task-title" placeholder="請輸入待辦事項或紀錄..." class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white" autocomplete="off">
+                    <input type="text" id="task-title" list="task-title-history" placeholder="請輸入待辦事項或紀錄..." class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white" autocomplete="off">
+                    <datalist id="task-title-history"></datalist>
                 </div>
                 
                 <div>
@@ -350,11 +352,45 @@
                 <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fa-solid fa-triangle-exclamation text-3xl text-red-500"></i>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-2">確定要清除此節課嗎？</h3>
-                <p class="text-sm text-slate-500 mb-6">清除後該節次將變為空堂。</p>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">確定要清除此紀錄嗎？</h3>
+                <p class="text-sm text-slate-500 mb-6">清除後這筆資料將被刪除。</p>
                 <div class="flex gap-3 justify-center">
                     <button onclick="cancelClearCourse()" class="px-5 py-2.5 text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors font-medium flex-1">取消</button>
                     <button onclick="executeClearCourse()" class="px-5 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium flex-1 shadow-sm">確定清除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增課表 Modal -->
+    <div id="add-schedule-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4 transition-opacity print:hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all modal-enter" id="add-schedule-modal-content">
+            <div class="p-5 border-b border-slate-100 bg-slate-50">
+                <h3 class="text-lg font-bold text-slate-800">新增其他課表</h3>
+            </div>
+            <div class="p-5">
+                <label class="block text-sm font-medium text-slate-700 mb-2">請輸入課表名稱 (例如：王大明老師)</label>
+                <input type="text" id="new-schedule-name" placeholder="輸入名稱..." class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-base bg-white">
+            </div>
+            <div class="p-5 border-t border-slate-100 bg-slate-50 flex gap-3 justify-end">
+                <button onclick="closeAddScheduleModal()" class="px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors font-medium shadow-sm">取消</button>
+                <button onclick="confirmAddSchedule()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm">確定新增</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 刪除整個自訂課表確認 Modal -->
+    <div id="delete-schedule-confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4 transition-opacity print:hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all modal-enter" id="delete-schedule-confirm-content">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-triangle-exclamation text-3xl text-red-500"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">確定要刪除此課表嗎？</h3>
+                <p class="text-sm text-slate-500 mb-6">刪除後此課表的所有資料將被永久移除，請確認。</p>
+                <div class="flex gap-3 justify-center">
+                    <button onclick="cancelDeleteCustomSchedule()" class="px-5 py-2.5 text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors font-medium flex-1">取消</button>
+                    <button onclick="executeDeleteCustomSchedule()" class="px-5 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium flex-1 shadow-sm">確定刪除</button>
                 </div>
             </div>
         </div>
@@ -409,12 +445,180 @@
         };
 
         let currentEditingTaskId = null;
+        let customSchedules = []; // 儲存動態新增的課表 (同步雲端)
+        
+        let editingScheduleSlot = null;
+        let editingScheduleItemIndex = null;
+
+        // 接收來自雲端的自訂課表清單 (取代 localStorage)
+        window.updateCustomSchedulesFromCloud = function(list) {
+            customSchedules = list || [];
+            refreshScheduleSelect();
+        };
+
+        // 重新繪製下拉選單內容
+        function refreshScheduleSelect() {
+            const select = document.getElementById('schedule-selector');
+            const currentValue = select.value;
+            
+            let optionsHtml = `
+                <option value="my_weekly_schedule">🧑‍🏫 我的專屬課表</option>
+                <option value="office_weekly_schedule">🏢 學務處課表</option>
+            `;
+            
+            customSchedules.forEach(s => {
+                optionsHtml += `<option value="${s.id}">📝 ${s.name}</option>`;
+            });
+            
+            optionsHtml += `<option value="add_new">➕ 新增其他課表...</option>`;
+            select.innerHTML = optionsHtml;
+            
+            if (Array.from(select.options).some(opt => opt.value === currentValue)) {
+                select.value = currentValue;
+            } else {
+                select.value = 'my_weekly_schedule';
+            }
+            
+            updateDeleteButtonVisibility();
+        }
+
+        let previousScheduleValue = 'my_weekly_schedule';
+
+        function onScheduleSelectChange() {
+            const select = document.getElementById('schedule-selector');
+            const val = select.value;
+            
+            if (val === 'add_new') {
+                select.value = previousScheduleValue; // 退回前一個選項
+                openAddScheduleModal();
+            } else {
+                previousScheduleValue = val;
+                updateDeleteButtonVisibility();
+                showToast('切換課表中...', 'success');
+                state.scheduleData = {};
+                renderSchedule();
+                if (window.switchCloudSchedule) {
+                    window.switchCloudSchedule(val);
+                }
+            }
+        }
+
+        function updateDeleteButtonVisibility() {
+            const select = document.getElementById('schedule-selector');
+            const btn = document.getElementById('btn-delete-schedule');
+            if (select.value.startsWith('custom_')) {
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+
+        function openAddScheduleModal() {
+            document.getElementById('new-schedule-name').value = '';
+            const modal = document.getElementById('add-schedule-modal');
+            const content = document.getElementById('add-schedule-modal-content');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                content.classList.remove('modal-enter');
+                content.classList.add('modal-enter-active');
+                setTimeout(() => document.getElementById('new-schedule-name').focus(), 100);
+            });
+        }
+
+        function closeAddScheduleModal() {
+            const modal = document.getElementById('add-schedule-modal');
+            const content = document.getElementById('add-schedule-modal-content');
+            content.classList.remove('modal-enter-active');
+            content.classList.add('modal-exit-active');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                content.classList.remove('modal-exit-active');
+                content.classList.add('modal-enter');
+            }, 200);
+        }
+
+        function confirmAddSchedule() {
+            const nameInput = document.getElementById('new-schedule-name').value.trim();
+            if (!nameInput) {
+                showToast('請輸入課表名稱', 'error');
+                return;
+            }
+            
+            const newId = 'custom_' + Date.now();
+            customSchedules.push({ id: newId, name: nameInput });
+            
+            // 寫入雲端 (取代 localStorage)
+            if (window.cloudSaveCustomSchedules) {
+                window.cloudSaveCustomSchedules(customSchedules);
+            }
+            
+            refreshScheduleSelect();
+            
+            const select = document.getElementById('schedule-selector');
+            select.value = newId;
+            previousScheduleValue = newId;
+            updateDeleteButtonVisibility();
+            
+            closeAddScheduleModal();
+            showToast(`已建立 ${nameInput} 的課表`);
+            
+            state.scheduleData = {};
+            renderSchedule();
+            if (window.switchCloudSchedule) {
+                window.switchCloudSchedule(newId);
+            }
+        }
+
+        function deleteCustomSchedule() {
+            const select = document.getElementById('schedule-selector');
+            const currentId = select.value;
+            if (!currentId.startsWith('custom_')) return;
+            
+            const modal = document.getElementById('delete-schedule-confirm-modal');
+            const content = document.getElementById('delete-schedule-confirm-content');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                content.classList.remove('modal-enter');
+                content.classList.add('modal-enter-active');
+            });
+        }
+
+        function cancelDeleteCustomSchedule() {
+            const modal = document.getElementById('delete-schedule-confirm-modal');
+            const content = document.getElementById('delete-schedule-confirm-content');
+            content.classList.remove('modal-enter-active');
+            content.classList.add('modal-exit-active');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                content.classList.remove('modal-exit-active');
+                content.classList.add('modal-enter');
+            }, 200);
+        }
+
+        function executeDeleteCustomSchedule() {
+            const select = document.getElementById('schedule-selector');
+            const currentId = select.value;
+            if (!currentId.startsWith('custom_')) return;
+            
+            customSchedules = customSchedules.filter(s => s.id !== currentId);
+            
+            // 寫入雲端 (取代 localStorage)
+            if (window.cloudSaveCustomSchedules) {
+                window.cloudSaveCustomSchedules(customSchedules);
+            }
+            
+            refreshScheduleSelect();
+            select.value = 'my_weekly_schedule';
+            previousScheduleValue = 'my_weekly_schedule';
+            onScheduleSelectChange();
+            
+            cancelDeleteCustomSchedule();
+            showToast('已刪除課表');
+        }
 
         function updateTaskTitleHistory() {
             const datalist = document.getElementById('task-title-history');
             if (!datalist) return;
-            
-            // 抓取過去所有不重複的事項標題
             const uniqueTitles = [...new Set(state.tasks.map(t => t.title))].filter(Boolean);
             datalist.innerHTML = uniqueTitles.map(title => `<option value="${title}">`).join('');
         }
@@ -458,8 +662,10 @@
                 if(scheduleMain) scheduleMain.classList.remove('hidden');
                 if(taskFab) taskFab.classList.add('hidden');
                 renderSchedule();
+                
+                // 自動捲動至最上方
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         window.updateTasksFromCloud = function(tasks) {
@@ -471,22 +677,17 @@
 
         function autoScroll() {
             setTimeout(() => {
-                // 若為單月視圖，強制回到最上方，以利查看星期與日期
                 if (state.view === 'month') {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                     return;
                 }
-                
-                // 尋找畫面中是否有「今天」的格子
                 const todayEl = document.querySelector('.bg-indigo-50.border-indigo-200') || document.querySelector('.bg-indigo-50\\/30');
                 if (todayEl) {
-                    // 如果有今天，將畫面捲動定位至今天的位置
                     const topNavHeight = document.getElementById('top-nav-bar').offsetHeight;
                     const elementPosition = todayEl.getBoundingClientRect().top;
                     const offsetPosition = elementPosition + window.pageYOffset - topNavHeight - 10;
                     window.scrollTo({ top: offsetPosition, behavior: "smooth" });
                 } else {
-                    // 如果沒有今天 (別的月份或週次)，則回到最頂部
                     window.scrollTo({ top: 0, behavior: "smooth" });
                 }
             }, 100);
@@ -502,7 +703,6 @@
             activeBtn.classList.remove('text-slate-500');
             activeBtn.classList.add('bg-white', 'shadow-sm', 'text-slate-700');
             
-            // 按鈕顯示邏輯
             const headerMonthBtn = document.getElementById('month-list-btn-header');
             if (headerMonthBtn) headerMonthBtn.classList.add('hidden');
             
@@ -555,7 +755,6 @@
             const month = state.currentDate.getMonth();
             const date = state.currentDate.getDate();
 
-            // 確保隱形選單的值與當前畫面同步
             const datePicker = document.getElementById('date-picker-input');
             if (datePicker) datePicker.value = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
 
@@ -623,17 +822,18 @@
                 let tasksHtml = '<div class="space-y-0.5 sm:space-y-1">';
                 tasks.forEach(task => {
                     const conf = categoryConfig[task.category];
-                    const starIcon = task.isImportant ? '<i class="fa-solid fa-star text-amber-400 text-[10px] ml-0.5"></i>' : '';
                     const completedClass = task.isCompleted ? 'opacity-60 grayscale bg-slate-50' : conf.color;
-                    const locIcon = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="hover:text-indigo-600 transition-colors" title="在 Google Maps 開啟"><i class="fa-solid fa-map-location-dot text-slate-400 text-[10px] ml-0.5"></i></a>` : '';
-                    const imgIcon = task.imageUrl ? `<i class="fa-solid fa-image text-indigo-400 text-[10px] ml-0.5"></i>` : '';
                     
-                    // 針對手機版優化：縮小邊距、隱藏地圖/圖片圖示以換取文字空間，文字稍微縮緊，星號改極小
+                    // 手機隱藏星星大圖示，改為微型星星，隱藏地圖/圖片
+                    const mobileStar = task.isImportant ? '<span class="sm:hidden text-amber-500 ml-0.5 text-[9px] shrink-0">★</span>' : '';
+                    const starIcon = task.isImportant ? '<i class="fa-solid fa-star text-amber-400 text-[10px] ml-0.5 hidden sm:inline-block"></i>' : '';
+                    const locIcon = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="hover:text-indigo-600 transition-colors hidden sm:inline-block" title="在 Google Maps 開啟"><i class="fa-solid fa-map-location-dot text-slate-400 text-[10px] ml-0.5"></i></a>` : '';
+                    const imgIcon = task.imageUrl ? `<i class="fa-solid fa-image text-indigo-400 text-[10px] ml-0.5 hidden sm:inline-block"></i>` : '';
+                    
                     tasksHtml += `
                         <div onclick="editTask('${task.id}')" class="truncate text-[10px] sm:text-xs px-0.5 sm:px-1.5 py-0.5 sm:py-1 rounded border transition-transform hover:scale-[102%] cursor-pointer flex items-center shadow-sm overflow-hidden ${completedClass}">
-                            <span class="truncate font-bold flex-1 text-center sm:text-left tracking-tighter sm:tracking-normal">${task.title}</span>
+                            <span class="truncate font-bold flex-1 text-center sm:text-left tracking-tighter sm:tracking-normal">${task.title}${mobileStar}</span>
                             <div class="hidden sm:flex items-center shrink-0 ml-1 z-10">${locIcon}${imgIcon}${starIcon}</div>
-                            ${task.isImportant ? '<span class="sm:hidden text-amber-500 ml-0.5 text-[8px] shrink-0">★</span>' : ''}
                         </div>
                     `;
                 });
@@ -645,7 +845,6 @@
         }
 
         function renderWeekView(grid, currentDate) {
-            // 單週視圖改成「橫列清單式」，左邊顯示日期，右邊顯示詳細任務
             grid.classList.remove('grid', 'grid-cols-7');
             grid.classList.add('flex', 'flex-col');
             const startOfWeek = new Date(currentDate);
@@ -803,16 +1002,15 @@
                         let taskList = dayTasks.map(t => `<div class="truncate text-left">▪ ${t.title}</div>`).join('');
                         let tooltip = `<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 w-max max-w-[150px] p-2 bg-slate-800/95 backdrop-blur-sm text-white text-[10px] leading-relaxed rounded-md shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[60] pointer-events-none">${taskList}</div>`;
                         
-                        // 判斷當天有哪些任務類別，並蒐集對應顏色
                         let dots = new Set();
                         dayTasks.forEach(t => {
-                            if (t.isImportant) dots.add('bg-red-500');
+                            if (t.isImportant) dots.add('bg-red-500'); 
                             if (t.category === 'discipline') dots.add('bg-blue-500');
                             else if (t.category === 'pe') dots.add('bg-emerald-500');
                             else if (t.category === 'other') dots.add('bg-purple-500');
                         });
-                        let dotsHtml = Array.from(dots).map(color => `<span class="w-1 h-1 rounded-full ${color}"></span>`).join('');
                         
+                        let dotsHtml = Array.from(dots).map(color => `<span class="w-1 h-1 rounded-full ${color}"></span>`).join('');
                         html += `<div class="${cls}" onclick="event.stopPropagation()">${i}<div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 flex items-center justify-center gap-[1px] w-full">${dotsHtml}</div>${tooltip}</div>`;
                     } else {
                         html += `<div class="${cls}">${i}</div>`;
@@ -918,7 +1116,6 @@
         function getAcademicYear(date) {
             const y = date.getFullYear();
             const m = date.getMonth() + 1;
-            // 台灣學年度算法：8月開始算新年。 例如：2026年8月 -> 115學年
             return m >= 8 ? y - 1911 : y - 1912;
         }
 
@@ -931,7 +1128,6 @@
             const startYear = acYear + 1911;
             const endYear = startYear + 1;
             
-            // 按照學年度順序排 8,9,10,11,12 (startYear) 然後 1,2,3,4,5,6,7 (endYear)
             const monthSeq = [
                 { y: startYear, m: 8 }, { y: startYear, m: 9 }, { y: startYear, m: 10 }, { y: startYear, m: 11 }, { y: startYear, m: 12 },
                 { y: endYear, m: 1 }, { y: endYear, m: 2 }, { y: endYear, m: 3 }, { y: endYear, m: 4 }, { y: endYear, m: 5 }, { y: endYear, m: 6 }, { y: endYear, m: 7 }
@@ -945,7 +1141,6 @@
                 const monthStr = String(month).padStart(2, '0');
                 const prefix = `${year}-${monthStr}-`;
                 
-                // 找出這個月份的所有事項並排序
                 const monthTasks = state.tasks
                     .filter(t => t.date.startsWith(prefix))
                     .sort((a, b) => a.date.localeCompare(b.date));
@@ -954,12 +1149,10 @@
                 html += `<h4 class="font-bold text-xl text-indigo-800 mb-3 border-b-2 border-indigo-200 pb-2 flex items-center gap-2"><i class="fa-regular fa-calendar text-indigo-500"></i>${year}年 ${month}月份</h4>`;
                 
                 if (monthTasks.length === 0) {
-                    // 若當月沒有紀錄，就顯示無紀錄佔位符，保持結構完整
                     html += `<div class="p-3 text-center text-slate-400 bg-slate-50/50 rounded-xl border border-slate-200 border-dashed italic text-sm">本月份尚無紀錄</div>`;
                 } else {
                     html += `<div class="space-y-3">`;
                     
-                    // 將同日期的事項群組化
                     const tasksByDate = {};
                     monthTasks.forEach(t => {
                         if (!tasksByDate[t.date]) tasksByDate[t.date] = [];
@@ -971,13 +1164,11 @@
                         const day = parseInt(dateStr.split('-')[2]);
                         
                         html += `
-                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 bg-white rounded-xl border border-slate-200 shadow-sm transition-all print:shadow-none print:border-b print:rounded-none">
-                            <!-- 顯示一次日期，點擊可新增該日事項 -->
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 bg-white rounded-xl border border-slate-200 shadow-sm transition-all print:shadow-none print:border-b print:rounded-none print:border-slate-300">
                             <div class="w-16 shrink-0 text-center bg-slate-50 rounded-lg py-3 border border-slate-200 flex items-center justify-center self-start cursor-pointer hover:bg-indigo-50 transition-colors print:border-none print:bg-transparent" onclick="editDateFromYearList('${dateStr}', null)" title="點擊新增本日事項">
                                 <span class="block text-2xl font-black text-slate-700 leading-none">${day}</span>
                             </div>
                             
-                            <!-- 同日期的事項列表 -->
                             <div class="flex-1 min-w-0 flex flex-col justify-center gap-1.5 sm:gap-1">`;
                             
                         dayTasks.forEach(t => {
@@ -987,7 +1178,7 @@
                             const doneClass = t.isCompleted ? 'line-through text-slate-400' : 'text-slate-800';
                             
                             html += `
-                                <div class="flex flex-col justify-center p-2 -mx-2 rounded-lg cursor-pointer hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors print:hover:bg-transparent print:-mx-0 print:p-1" onclick="editDateFromYearList('${t.date}', '${t.id}')">
+                                <div class="flex flex-col justify-center p-2 -mx-2 rounded-lg cursor-pointer hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors print:hover:bg-transparent print:-mx-0 print:p-1 print:border-none" onclick="editDateFromYearList('${t.date}', '${t.id}')">
                                     <div class="flex items-center gap-2 flex-wrap mb-0.5">
                                         <span class="px-2 py-0.5 rounded text-white text-[10px] font-bold shadow-sm ${t.isCompleted ? 'bg-slate-400' : conf.dot} print:shadow-none">${conf.label}</span>
                                         <span class="font-bold text-base sm:text-lg ${doneClass} break-words">${t.title}${star}</span>
@@ -1043,7 +1234,6 @@
             const listContent = document.getElementById('yearly-list-container').innerHTML;
             const printArea = document.getElementById('print-area');
             
-            // 將內容處理成適合列印的純淨版本 (移除互動用的點擊屬性與游標樣式)
             let cleanHtml = listContent
                 .replace(/onclick="[^"]*"/g, "")
                 .replace(/cursor-pointer/g, "")
@@ -1062,7 +1252,6 @@
                 </div>
             `;
             
-            // 強制瀏覽器重繪，並稍微延遲確保內容已寫入DOM
             setTimeout(() => {
                 try {
                     window.print();
@@ -1093,14 +1282,12 @@
             document.getElementById('task-desc').value = '';
             document.querySelector('input[name="task-category"][value="discipline"]').checked = true;
             
-            // 新增時隱藏刪除按鈕
             document.getElementById('btn-delete').classList.add('hidden');
 
             const modal = document.getElementById('task-modal');
             const content = document.getElementById('task-modal-content');
             modal.classList.remove('hidden');
             
-            // 重置捲動條到最上方
             const scrollArea = content.querySelector('.overflow-y-auto');
             if (scrollArea) scrollArea.scrollTop = 0;
 
@@ -1130,14 +1317,12 @@
             document.getElementById('task-desc').value = task.desc || '';
             document.querySelector(`input[name="task-category"][value="${task.category}"]`).checked = true;
             
-            // 編輯時顯示刪除按鈕
             document.getElementById('btn-delete').classList.remove('hidden');
 
             const modal = document.getElementById('task-modal');
             const content = document.getElementById('task-modal-content');
             modal.classList.remove('hidden');
             
-            // 重置捲動條到最上方
             const scrollArea = content.querySelector('.overflow-y-auto');
             if (scrollArea) scrollArea.scrollTop = 0;
 
@@ -1287,20 +1472,11 @@
             'purple': { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
             'rose': { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' }
         };
-        let editingScheduleSlot = null;
 
         window.updateScheduleFromCloud = function(data) {
             state.scheduleData = data;
             if (state.appMode === 'schedule') renderSchedule();
         };
-
-        function onScheduleSelectChange() {
-            const select = document.getElementById('schedule-selector');
-            showToast('切換課表中...', 'success');
-            state.scheduleData = {};
-            renderSchedule(); 
-            if (window.switchCloudSchedule) window.switchCloudSchedule(select.value);
-        }
 
         function renderSchedule() {
             const container = document.getElementById('schedule-grid');
@@ -1329,29 +1505,27 @@
                 for (let day = 1; day <= 5; day++) {
                     const key = `${day}-${period.id}`;
                     const rawData = state.scheduleData[key];
-                    // 在這層加入 relative 與 flex flex-col，為絕對定位與置中做準備
                     html += `<div class="flex-1 p-0.5 sm:p-1 border-r border-slate-100 last:border-r-0 group relative flex flex-col">`;
                     
                     if (!rawData) {
                         html += `<div class="flex-1 w-full flex items-center justify-center text-slate-300 border-2 border-dashed border-transparent hover:border-slate-200 rounded sm:rounded-lg transition-colors cursor-pointer" onclick="openScheduleModal(${day}, '${period.id}', null)">
-                            <i class="fa-solid fa-plus opacity-0 group-hover:opacity-100 transition-opacity text-xs sm:text-base"></i>
+                            <i class="fa-solid fa-plus opacity-0 md:group-hover:opacity-100 transition-opacity text-xs sm:text-base"></i>
                         </div>`;
                     } else {
                         const items = Array.isArray(rawData) ? rawData : [rawData];
-                        // 讓內容容器 flex-1 填滿並使用 justify-center 完美置中
-                        html += `<div class="flex-1 w-full flex flex-col justify-center items-center gap-0.5">`;
+                        html += `<div class="flex-1 w-full flex flex-col justify-center items-center gap-0.5 relative z-0 pb-3">`;
                         items.forEach((data, index) => {
                             const colorTheme = scheduleColors[data.color] || scheduleColors['gray'];
-                            // 拿掉 border 與 bg-white，僅留 padding 與滑鼠 hover 的極淡背景
+                            // 取消底色，保留字體顏色，手機版字體設定為8.5px，解決裁切(leading-[1.2] px-0.5)
                             html += `
-                            <div onclick="openScheduleModal(${day}, '${period.id}', ${index})" class="w-full rounded py-1 px-0 flex flex-col justify-center items-center hover:bg-slate-100/60 transition-colors active:scale-95 cursor-pointer overflow-hidden">
-                                <div class="font-bold text-[8.5px] min-[390px]:text-[9px] sm:text-[14px] ${colorTheme.text} leading-[1.2] sm:leading-tight text-center whitespace-nowrap tracking-tighter sm:tracking-normal w-full overflow-hidden text-ellipsis px-0.5">${data.name}</div>
+                            <div onclick="openScheduleModal(${day}, '${period.id}', ${index})" class="w-full rounded py-1 flex flex-col justify-center items-center hover:bg-slate-50 transition-colors active:scale-95 cursor-pointer overflow-hidden">
+                                <div class="font-bold text-[8.5px] sm:text-[14px] ${colorTheme.text} leading-[1.2] px-0.5 text-center whitespace-nowrap tracking-tighter sm:tracking-normal w-full overflow-hidden text-ellipsis">${data.name}</div>
                                 ${data.location ? `<div class="text-[7.5px] sm:text-[11px] ${colorTheme.text} opacity-80 whitespace-nowrap tracking-tighter sm:tracking-normal text-center w-full overflow-hidden text-ellipsis leading-[1.2] px-0.5"><i class="fa-solid fa-location-dot mr-0.5 hidden sm:inline-block"></i>${data.location}</div>` : ''}
                             </div>`;
                         });
                         html += `</div>`;
                         
-                        // 將追加按鈕改為絕對定位 (absolute)，縮小放置於右下角，完全不影響排版
+                        // 隱藏版絕對定位追加按鈕
                         html += `<div onclick="openScheduleModal(${day}, '${period.id}', null)" class="absolute bottom-0 right-0 sm:bottom-0.5 sm:right-0.5 w-5 h-5 flex justify-center items-center text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded cursor-pointer transition-all opacity-30 md:opacity-0 md:group-hover:opacity-100 z-10" title="追加">
                             <i class="fa-solid fa-plus text-[8px] sm:text-[10px]"></i>
                         </div>`;
@@ -1550,7 +1724,6 @@
         function initSwipeGestures() {
             const container = document.body; 
             container.addEventListener('touchstart', e => {
-                // 如果在彈出視窗內，或在課表畫面，則不觸發左右滑動換月
                 if (e.target.closest('.modal-enter-active') || state.appMode === 'schedule') return;
                 touchStartX = e.changedTouches[0].screenX;
                 touchStartY = e.changedTouches[0].screenY;
@@ -1562,21 +1735,6 @@
                 touchEndY = e.changedTouches[0].screenY;
                 handleSwipe();
             }, { passive: true });
-        }
-
-        function handleSwipe() {
-            const diffX = touchEndX - touchStartX;
-            const diffY = touchEndY - touchStartY;
-            // 確保水平滑動大於垂直滑動，且大於閾值
-            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > SWIPE_THRESHOLD) {
-                if (diffX > 0) { 
-                    // 往右滑 (看上一個月)
-                    if(state.view !== 'year') changeDate(-1); 
-                } else { 
-                    // 往左滑 (看下一個月)
-                    if(state.view !== 'year') changeDate(1); 
-                }
-            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1616,6 +1774,28 @@
         window.cloudUpdateTask = async (taskId, taskData) => await updateDoc(doc(tasksRef, taskId), taskData);
         window.cloudDeleteTask = async (taskId) => await deleteDoc(doc(tasksRef, taskId));
 
+        // 監聽並同步自訂課表清單 (取代 localStorage)
+        const schedulesListRef = doc(db, 'settings', 'custom_schedules_list');
+        onSnapshot(schedulesListRef, (snapshot) => {
+            if (snapshot.exists()) {
+                window.updateCustomSchedulesFromCloud(snapshot.data().list);
+            } else {
+                setDoc(schedulesListRef, { list: [] });
+                window.updateCustomSchedulesFromCloud([]);
+            }
+        }, (error) => {
+            console.error("自訂課表清單連線錯誤", error);
+        });
+
+        window.cloudSaveCustomSchedules = async (list) => {
+            try {
+                await setDoc(schedulesListRef, { list: list });
+            } catch (error) {
+                console.error("儲存課表清單失敗", error);
+                window.showToast("清單同步失敗", "error");
+            }
+        };
+
         let unsubscribeSchedule = null;
         window.switchCloudSchedule = (scheduleId) => {
             if (unsubscribeSchedule) unsubscribeSchedule();
@@ -1629,6 +1809,7 @@
             });
         };
 
+        // 載入時預設使用第一個
         window.switchCloudSchedule('my_weekly_schedule');
 
         window.cloudUpdateSchedule = async (newData) => {
