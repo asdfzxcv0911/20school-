@@ -1309,18 +1309,32 @@
                 
                 for (let day = 1; day <= 5; day++) {
                     const key = `${day}-${period.id}`;
-                    const data = state.scheduleData[key];
-                    html += `<div class="flex-1 p-0.5 sm:p-1.5 border-r border-slate-100 last:border-r-0 group">`;
-                    if (!data) {
-                        html += `<div class="h-full w-full flex items-center justify-center text-slate-300 border-2 border-dashed border-transparent hover:border-slate-200 rounded sm:rounded-lg transition-colors cursor-pointer" onclick="openScheduleModal(${day}, '${period.id}')">
+                    const rawData = state.scheduleData[key];
+                    // 在這層加入 relative 與 flex flex-col，為絕對定位與置中做準備
+                    html += `<div class="flex-1 p-0.5 sm:p-1 border-r border-slate-100 last:border-r-0 group relative flex flex-col">`;
+                    
+                    if (!rawData) {
+                        html += `<div class="flex-1 w-full flex items-center justify-center text-slate-300 border-2 border-dashed border-transparent hover:border-slate-200 rounded sm:rounded-lg transition-colors cursor-pointer" onclick="openScheduleModal(${day}, '${period.id}', null)">
                             <i class="fa-solid fa-plus opacity-0 group-hover:opacity-100 transition-opacity text-xs sm:text-base"></i>
                         </div>`;
                     } else {
-                        const colorTheme = scheduleColors[data.color] || scheduleColors['gray'];
-                        html += `
-                        <div class="h-full w-full rounded sm:rounded-lg ${colorTheme.bg} ${colorTheme.border} border p-1 sm:p-2 flex flex-col justify-center items-center cursor-pointer hover:shadow-md transition-all active:scale-95" onclick="openScheduleModal(${day}, '${period.id}')">
-                            <div class="font-bold text-[10px] sm:text-[15px] ${colorTheme.text} leading-tight text-center break-words w-full px-0.5 overflow-hidden" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${data.name}</div>
-                            ${data.location ? `<div class="text-[8px] sm:text-[11px] ${colorTheme.text} opacity-80 mt-0.5 sm:mt-1 truncate text-center w-full"><i class="fa-solid fa-location-dot mr-0.5 sm:mr-1"></i>${data.location}</div>` : ''}
+                        const items = Array.isArray(rawData) ? rawData : [rawData];
+                        // 讓內容容器 flex-1 填滿並使用 justify-center 完美置中
+                        html += `<div class="flex-1 w-full flex flex-col justify-center items-center gap-0.5">`;
+                        items.forEach((data, index) => {
+                            const colorTheme = scheduleColors[data.color] || scheduleColors['gray'];
+                            // 拿掉 border 與 bg-white，僅留 padding 與滑鼠 hover 的極淡背景
+                            html += `
+                            <div onclick="openScheduleModal(${day}, '${period.id}', ${index})" class="w-full rounded p-0.5 sm:p-1 flex flex-col justify-center items-center hover:bg-slate-100/60 transition-colors active:scale-95 cursor-pointer">
+                                <div class="font-bold text-[10px] sm:text-[13px] ${colorTheme.text} leading-tight text-center break-words w-full px-0.5">${data.name}</div>
+                                ${data.location ? `<div class="text-[8px] sm:text-[10px] ${colorTheme.text} opacity-80 truncate text-center w-full"><i class="fa-solid fa-location-dot mr-0.5"></i>${data.location}</div>` : ''}
+                            </div>`;
+                        });
+                        html += `</div>`;
+                        
+                        // 將追加按鈕改為絕對定位 (absolute)，縮小放置於右下角，完全不影響排版
+                        html += `<div onclick="openScheduleModal(${day}, '${period.id}', null)" class="absolute bottom-0 right-0 sm:bottom-0.5 sm:right-0.5 w-5 h-5 flex justify-center items-center text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded cursor-pointer transition-all opacity-30 md:opacity-0 md:group-hover:opacity-100 z-10" title="追加">
+                            <i class="fa-solid fa-plus text-[8px] sm:text-[10px]"></i>
                         </div>`;
                     }
                     html += `</div>`;
@@ -1345,13 +1359,24 @@
             container.innerHTML = html;
         }
 
-        function openScheduleModal(day, periodId) {
+        function openScheduleModal(day, periodId, itemIndex = null) {
             editingScheduleSlot = `${day}-${periodId}`;
+            editingScheduleItemIndex = itemIndex;
+            
             document.getElementById('edit-day-display').innerText = scheduleDays[day - 1];
             const pObj = schedulePeriods.find(p => p.id == periodId);
             document.getElementById('edit-period-display').innerText = pObj ? pObj.name : '';
             
-            const data = state.scheduleData[editingScheduleSlot] || { name: '', location: '', color: 'emerald' };
+            let data = { name: '', location: '', color: 'emerald' };
+            const rawData = state.scheduleData[editingScheduleSlot];
+            
+            if (rawData) {
+                const items = Array.isArray(rawData) ? rawData : [rawData];
+                if (itemIndex !== null && items[itemIndex]) {
+                    data = items[itemIndex];
+                }
+            }
+            
             document.getElementById('course-name').value = data.name;
             document.getElementById('course-location').value = data.location;
             
@@ -1385,13 +1410,22 @@
             const name = document.getElementById('course-name').value.trim();
             if (!name) { showToast('請輸入科目名稱', 'error'); return; }
 
-            const data = {
+            const newData = {
                 name: name,
                 location: document.getElementById('course-location').value.trim(),
                 color: document.querySelector('input[name="course-color"]:checked').value
             };
 
-            state.scheduleData[editingScheduleSlot] = data;
+            let rawData = state.scheduleData[editingScheduleSlot];
+            let items = rawData ? (Array.isArray(rawData) ? [...rawData] : [rawData]) : [];
+
+            if (editingScheduleItemIndex !== null) {
+                items[editingScheduleItemIndex] = newData;
+            } else {
+                items.push(newData);
+            }
+
+            state.scheduleData[editingScheduleSlot] = items;
             if (window.cloudUpdateSchedule) await window.cloudUpdateSchedule(state.scheduleData);
 
             renderSchedule();
@@ -1425,13 +1459,27 @@
                 content.classList.remove('modal-exit-active');
                 content.classList.add('modal-enter');
                 const [day, period] = editingScheduleSlot.split('-');
-                openScheduleModal(parseInt(day), period);
+                openScheduleModal(parseInt(day), period, editingScheduleItemIndex);
             }, 200);
         }
 
         async function executeClearCourse() {
             if (!editingScheduleSlot) return;
-            delete state.scheduleData[editingScheduleSlot];
+            
+            let rawData = state.scheduleData[editingScheduleSlot];
+            if (rawData && editingScheduleItemIndex !== null) {
+                let items = Array.isArray(rawData) ? [...rawData] : [rawData];
+                items.splice(editingScheduleItemIndex, 1);
+                
+                if (items.length === 0) {
+                    delete state.scheduleData[editingScheduleSlot];
+                } else {
+                    state.scheduleData[editingScheduleSlot] = items;
+                }
+            } else {
+                delete state.scheduleData[editingScheduleSlot];
+            }
+            
             if (window.cloudUpdateSchedule) await window.cloudUpdateSchedule(state.scheduleData);
             renderSchedule();
             
@@ -1444,7 +1492,7 @@
                 content.classList.remove('modal-exit-active');
                 content.classList.add('modal-enter');
             }, 200);
-            showToast('已清除該節課');
+            showToast('已清除該筆資料');
         }
 
         function showToast(message, type = 'success') {
