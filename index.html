@@ -361,15 +361,19 @@
 
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         
-        // 台灣國定假日表 (全域)
-        const twHolidays = {
-            "2026-09-25": "中秋節", "2026-10-09": "國慶補假", "2026-10-10": "國慶日",
-            "2027-01-01": "元旦", "2027-02-05": "小年夜", "2027-02-06": "除夕",
-            "2027-02-08": "春節", "2027-02-09": "春節", "2027-02-10": "春節",
-            "2027-02-11": "春節", "2027-02-12": "春節", "2027-02-28": "和平紀念日",
-            "2027-03-01": "和平紀念日補假", "2027-04-02": "兒童節補假",
-            "2027-04-04": "兒童節", "2027-04-05": "清明節", "2027-06-09": "端午節"
-        };
+        // 台灣國定假日表 (依照圖片指定日期全面更新)
+        const twHolidays = {};
+        [2025, 2026, 2027, 2028].forEach(y => {
+            twHolidays[`${y}-02-14`]="農曆春節"; twHolidays[`${y}-02-15`]="農曆春節"; twHolidays[`${y}-02-16`]="農曆春節"; twHolidays[`${y}-02-17`]="農曆春節"; twHolidays[`${y}-02-18`]="農曆春節"; twHolidays[`${y}-02-19`]="農曆春節"; twHolidays[`${y}-02-20`]="農曆春節"; twHolidays[`${y}-02-21`]="農曆春節"; twHolidays[`${y}-02-22`]="農曆春節";
+            twHolidays[`${y}-02-27`]="和平紀念日"; twHolidays[`${y}-02-28`]="和平紀念日"; twHolidays[`${y}-03-01`]="和平紀念日";
+            twHolidays[`${y}-04-03`]="兒童節及清明節"; twHolidays[`${y}-04-04`]="兒童節及清明節"; twHolidays[`${y}-04-05`]="兒童節及清明節"; twHolidays[`${y}-04-06`]="兒童節及清明節";
+            twHolidays[`${y}-05-01`]="勞動節"; twHolidays[`${y}-05-02`]="勞動節"; twHolidays[`${y}-05-03`]="勞動節";
+            twHolidays[`${y}-06-19`]="端午節"; twHolidays[`${y}-06-20`]="端午節"; twHolidays[`${y}-06-21`]="端午節";
+            twHolidays[`${y}-09-25`]="中秋節及教師節"; twHolidays[`${y}-09-26`]="中秋節及教師節"; twHolidays[`${y}-09-27`]="中秋節及教師節"; twHolidays[`${y}-09-28`]="中秋節及教師節";
+            twHolidays[`${y}-10-09`]="國慶日"; twHolidays[`${y}-10-10`]="國慶日"; twHolidays[`${y}-10-11`]="國慶日";
+            twHolidays[`${y}-10-24`]="光復節"; twHolidays[`${y}-10-25`]="光復節"; twHolidays[`${y}-10-26`]="光復節";
+            twHolidays[`${y}-12-25`]="行憲紀念日"; twHolidays[`${y}-12-26`]="行憲紀念日"; twHolidays[`${y}-12-27`]="行憲紀念日";
+        });
 
         const categoryConfig = {
             discipline: { color: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200', dot: 'bg-blue-500', label: '生' },
@@ -571,14 +575,15 @@
                 tasks.forEach(task => {
                     const conf = categoryConfig[task.category];
                     const starIcon = task.isImportant ? '<i class="fa-solid fa-star text-amber-400 text-[10px] ml-0.5"></i>' : '';
-                    const completedClass = task.isCompleted ? 'opacity-60 grayscale line-through bg-slate-100 border-slate-200 text-slate-500' : conf.color;
+                    const completedClass = task.isCompleted ? 'opacity-60 grayscale bg-slate-50' : conf.color;
                     const locIcon = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="hover:text-indigo-600 transition-colors" title="在 Google Maps 開啟"><i class="fa-solid fa-map-location-dot text-slate-400 text-[10px] ml-0.5"></i></a>` : '';
+                    const imgIcon = task.imageUrl ? `<i class="fa-solid fa-image text-indigo-400 text-[10px] ml-0.5"></i>` : '';
                     
                     // 單月視圖：不顯示生、體字首，讓空間極大化，標題直接緊連圖示
                     tasksHtml += `
                         <div onclick="editTask('${task.id}')" class="truncate text-[10px] sm:text-xs px-1.5 sm:px-2 py-1 rounded border transition-transform hover:scale-[102%] cursor-pointer flex items-center shadow-sm ${completedClass}">
                             <span class="truncate font-bold flex-1">${task.title}</span>
-                            <div class="flex items-center shrink-0 ml-1 z-10">${locIcon}${starIcon}</div>
+                            <div class="flex items-center shrink-0 ml-1 z-10">${locIcon}${imgIcon}${starIcon}</div>
                         </div>
                     `;
                 });
@@ -637,6 +642,7 @@
                                     const completedClass = task.isCompleted ? 'opacity-60 grayscale bg-slate-50 border-slate-200' : conf.color;
                                     const textLineThrough = task.isCompleted ? 'line-through text-slate-500' : '';
                                     const locLink = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="text-xs sm:text-sm font-medium opacity-90 whitespace-nowrap hover:text-indigo-600 hover:underline z-10"><i class="fa-solid fa-map-location-dot mr-1 text-slate-400"></i> ${task.location}</a>` : '';
+                                    const imgThumb = task.imageUrl ? `<div class="mt-1"><img src="${task.imageUrl}" class="h-10 rounded border border-slate-200 object-cover shadow-sm"></div>` : '';
 
                                     return `
                                     <div onclick="editTask('${task.id}')" class="p-2 sm:p-2.5 rounded-lg border ${completedClass} flex flex-col md:flex-row md:items-center gap-1 md:gap-3 cursor-pointer hover:shadow-sm transition-all active:scale-[99%] relative">
@@ -648,6 +654,7 @@
                                         <div class="flex flex-col md:flex-row flex-1 gap-1 md:gap-3 md:ml-2 overflow-hidden items-start md:items-center">
                                             ${locLink}
                                             ${task.desc ? `<p class="text-xs sm:text-sm opacity-80 truncate flex-1 ${textLineThrough}"><i class="fa-solid fa-align-left mr-1"></i>${task.desc}</p>` : ''}
+                                            ${imgThumb}
                                         </div>
                                     </div>`;
                                 }).join('')}
@@ -703,6 +710,7 @@
                                 </div>
                                 ${locLink}
                                 ${task.desc ? `<p class="text-sm text-slate-500 break-words leading-relaxed bg-slate-50/50 p-3 rounded-lg border border-slate-100 ${task.isCompleted ? 'line-through opacity-80' : ''}">${task.desc.replace(/\n/g, '<br>')}</p>` : ''}
+                                ${task.imageUrl ? `<div class="mt-2"><img src="${task.imageUrl}" class="max-h-40 rounded-lg border border-slate-200 shadow-sm object-contain bg-slate-50"></div>` : ''}
                             </div>
                         </div>
                     `;
@@ -731,16 +739,23 @@
                 
                 for (let i = 1; i <= daysInMonth; i++) {
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                    const hasTask = getTasksForDate(dateStr).length > 0;
+                    const dayTasks = getTasksForDate(dateStr);
+                    const hasTask = dayTasks.length > 0;
                     const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === i;
                     const holidayName = twHolidays[dateStr];
                     
-                    let cls = 'w-6 h-6 sm:w-7 sm:h-7 mx-auto rounded-full flex items-center justify-center text-[10px] sm:text-xs font-medium transition-transform hover:scale-110 relative ';
+                    let cls = 'w-6 h-6 sm:w-7 sm:h-7 mx-auto rounded-full flex items-center justify-center text-[10px] sm:text-xs font-medium transition-transform hover:scale-110 relative group ';
                     if (isToday) cls += 'bg-indigo-600 text-white font-bold shadow-sm';
                     else if (holidayName) cls += 'text-red-500 font-bold bg-red-50';
                     else cls += 'text-slate-600 hover:bg-slate-100';
                     
-                    html += `<div class="${cls}">${i}${hasTask ? `<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-amber-500 rounded-full"></span>` : ''}</div>`;
+                    if (hasTask) {
+                        let taskList = dayTasks.map(t => `<div class="truncate text-left">▪ ${t.title}</div>`).join('');
+                        let tooltip = `<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 w-max max-w-[150px] p-2 bg-slate-800/95 backdrop-blur-sm text-white text-[10px] leading-relaxed rounded-md shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[60] pointer-events-none">${taskList}</div>`;
+                        html += `<div class="${cls}" onclick="event.stopPropagation()">${i}<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-amber-500 rounded-full"></span>${tooltip}</div>`;
+                    } else {
+                        html += `<div class="${cls}">${i}</div>`;
+                    }
                 }
                 html += `</div></div>`;
             }
