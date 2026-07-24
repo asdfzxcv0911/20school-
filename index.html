@@ -75,13 +75,7 @@
                 <div class="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-between sm:justify-start">
                     <div class="flex items-center gap-1 sm:gap-2">
                         <button onclick="changeDate(-1)" class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors active:scale-95"><i class="fa-solid fa-chevron-left"></i></button>
-                        
-                        <!-- 加入隱形日期選擇器，包覆在文字上方 -->
-                        <div class="relative cursor-pointer group flex items-center justify-center">
-                            <h2 id="current-date-display" class="text-lg sm:text-xl font-bold text-slate-800 min-w-[130px] text-center group-hover:text-indigo-600 transition-colors" title="點擊選擇日期">2026年 8月</h2>
-                            <input type="date" id="date-picker-input" onchange="jumpToDate(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer m-0 p-0 z-10">
-                        </div>
-                        
+                        <h2 id="current-date-display" class="text-lg sm:text-xl font-bold text-slate-800 min-w-[130px] text-center">2026年 8月</h2>
                         <button onclick="changeDate(1)" class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors active:scale-95"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                     <!-- 改為房子與單月清單圖示 -->
@@ -206,9 +200,15 @@
             <div class="p-4 sm:p-5 space-y-4 overflow-y-auto min-h-0 touch-pan-y">
                 <input type="hidden" id="task-id">
                 
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">日期</label>
-                    <input type="date" id="task-date" class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">日期</label>
+                        <input type="date" id="task-date" class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">時間 (選填)</label>
+                        <input type="time" id="task-time" class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white">
+                    </div>
                 </div>
 
                 <div>
@@ -263,7 +263,8 @@
                 <button type="button" id="btn-delete" onclick="confirmDeleteTask()" class="text-red-500 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors font-medium hidden flex items-center gap-1 active:scale-95">
                     <i class="fa-regular fa-trash-can"></i> 刪除
                 </button>
-                <div class="flex gap-3 ml-auto">
+                <div class="flex gap-2 sm:gap-3 ml-auto">
+                    <button type="button" onclick="addToCalendar()" class="px-3 py-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors font-medium active:scale-95 shadow-sm flex items-center gap-1"><i class="fa-regular fa-bell"></i> 提醒</button>
                     <button type="button" onclick="closeTaskModal()" class="px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors font-medium active:scale-95 shadow-sm">取消</button>
                     <button type="button" onclick="saveTask()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm active:scale-95">儲存</button>
                 </div>
@@ -367,19 +368,34 @@
 
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         
-        // 台灣國定假日表 (依照圖片指定日期全面更新)
+        // 台灣國定假日表 (獨立劃分 2026 與 2027 年)
         const twHolidays = {};
-        [2025, 2026, 2027, 2028].forEach(y => {
-            twHolidays[`${y}-02-14`]="農曆春節"; twHolidays[`${y}-02-15`]="農曆春節"; twHolidays[`${y}-02-16`]="農曆春節"; twHolidays[`${y}-02-17`]="農曆春節"; twHolidays[`${y}-02-18`]="農曆春節"; twHolidays[`${y}-02-19`]="農曆春節"; twHolidays[`${y}-02-20`]="農曆春節"; twHolidays[`${y}-02-21`]="農曆春節"; twHolidays[`${y}-02-22`]="農曆春節";
-            twHolidays[`${y}-02-27`]="和平紀念日"; twHolidays[`${y}-02-28`]="和平紀念日"; twHolidays[`${y}-03-01`]="和平紀念日";
-            twHolidays[`${y}-04-03`]="兒童節及清明節"; twHolidays[`${y}-04-04`]="兒童節及清明節"; twHolidays[`${y}-04-05`]="兒童節及清明節"; twHolidays[`${y}-04-06`]="兒童節及清明節";
-            twHolidays[`${y}-05-01`]="勞動節"; twHolidays[`${y}-05-02`]="勞動節"; twHolidays[`${y}-05-03`]="勞動節";
-            twHolidays[`${y}-06-19`]="端午節"; twHolidays[`${y}-06-20`]="端午節"; twHolidays[`${y}-06-21`]="端午節";
-            twHolidays[`${y}-09-25`]="中秋節及教師節"; twHolidays[`${y}-09-26`]="中秋節及教師節"; twHolidays[`${y}-09-27`]="中秋節及教師節"; twHolidays[`${y}-09-28`]="中秋節及教師節";
-            twHolidays[`${y}-10-09`]="國慶日"; twHolidays[`${y}-10-10`]="國慶日"; twHolidays[`${y}-10-11`]="國慶日";
-            twHolidays[`${y}-10-24`]="光復節"; twHolidays[`${y}-10-25`]="光復節"; twHolidays[`${y}-10-26`]="光復節";
-            twHolidays[`${y}-12-25`]="行憲紀念日"; twHolidays[`${y}-12-26`]="行憲紀念日"; twHolidays[`${y}-12-27`]="行憲紀念日";
-        });
+        
+        // === 2026年 假日表 ===
+        twHolidays['2026-01-01']="元旦";
+        twHolidays['2026-02-14']="春節連假"; twHolidays['2026-02-15']="春節連假"; twHolidays['2026-02-16']="春節連假"; twHolidays['2026-02-17']="春節連假"; twHolidays['2026-02-18']="春節連假"; twHolidays['2026-02-19']="春節連假"; twHolidays['2026-02-20']="春節連假"; twHolidays['2026-02-21']="春節連假"; twHolidays['2026-02-22']="春節連假";
+        twHolidays['2026-02-27']="和平紀念日"; twHolidays['2026-02-28']="和平紀念日"; twHolidays['2026-03-01']="和平紀念日";
+        twHolidays['2026-04-03']="兒童+清明節"; twHolidays['2026-04-04']="兒童+清明節"; twHolidays['2026-04-05']="兒童+清明節"; twHolidays['2026-04-06']="兒童+清明節";
+        twHolidays['2026-05-01']="勞動節連假"; twHolidays['2026-05-02']="勞動節連假"; twHolidays['2026-05-03']="勞動節連假";
+        twHolidays['2026-06-19']="端午節連假"; twHolidays['2026-06-20']="端午節連假"; twHolidays['2026-06-21']="端午節連假";
+        twHolidays['2026-09-25']="中秋+教師節"; twHolidays['2026-09-26']="中秋+教師節"; twHolidays['2026-09-27']="中秋+教師節"; twHolidays['2026-09-28']="中秋+教師節";
+        twHolidays['2026-10-09']="國慶日"; twHolidays['2026-10-10']="國慶日"; twHolidays['2026-10-11']="國慶日";
+        twHolidays['2026-10-24']="光復節"; twHolidays['2026-10-25']="光復節"; twHolidays['2026-10-26']="光復節";
+        twHolidays['2026-12-25']="行憲紀念日"; twHolidays['2026-12-26']="行憲紀念日"; twHolidays['2026-12-27']="行憲紀念日";
+
+        // === 2027年 假日表 ===
+        twHolidays['2027-01-01']="元旦"; twHolidays['2027-01-02']="元旦"; twHolidays['2027-01-03']="元旦";
+        twHolidays['2027-02-04']="農曆春節"; twHolidays['2027-02-05']="農曆春節"; twHolidays['2027-02-06']="農曆春節"; twHolidays['2027-02-07']="農曆春節"; twHolidays['2027-02-08']="農曆春節"; twHolidays['2027-02-09']="農曆春節"; twHolidays['2027-02-10']="農曆春節";
+        twHolidays['2027-02-27']="和平紀念日"; twHolidays['2027-02-28']="和平紀念日"; twHolidays['2027-03-01']="和平紀念日";
+        twHolidays['2027-04-03']="兒童節與清明節"; twHolidays['2027-04-04']="兒童節與清明節"; twHolidays['2027-04-05']="兒童節與清明節"; twHolidays['2027-04-06']="兒童節與清明節";
+        twHolidays['2027-04-30']="勞動節"; twHolidays['2027-05-01']="勞動節"; twHolidays['2027-05-02']="勞動節";
+        twHolidays['2027-06-09']="端午節";
+        twHolidays['2027-09-15']="中秋節";
+        twHolidays['2027-09-28']="教師節";
+        twHolidays['2027-10-09']="國慶日"; twHolidays['2027-10-10']="國慶日"; twHolidays['2027-10-11']="國慶日";
+        twHolidays['2027-10-23']="臺灣光復節"; twHolidays['2027-10-24']="臺灣光復節"; twHolidays['2027-10-25']="臺灣光復節";
+        twHolidays['2027-12-24']="行憲紀念日"; twHolidays['2027-12-25']="行憲紀念日"; twHolidays['2027-12-26']="行憲紀念日";
+        twHolidays['2027-12-31']="2028元旦跨年";
 
         const categoryConfig = {
             discipline: { color: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200', dot: 'bg-blue-500', label: '生' },
@@ -388,6 +404,15 @@
         };
 
         let currentEditingTaskId = null;
+
+        function updateTaskTitleHistory() {
+            const datalist = document.getElementById('task-title-history');
+            if (!datalist) return;
+            
+            // 抓取過去所有不重複的事項標題
+            const uniqueTitles = [...new Set(state.tasks.map(t => t.title))].filter(Boolean);
+            datalist.innerHTML = uniqueTitles.map(title => `<option value="${title}">`).join('');
+        }
 
         function switchAppMode(mode) {
             state.appMode = mode;
@@ -434,6 +459,7 @@
 
         window.updateTasksFromCloud = function(tasks) {
             state.tasks = tasks;
+            updateTaskTitleHistory();
             renderCalendar();
             checkReminders();
         };
@@ -1023,6 +1049,7 @@
             document.getElementById('modal-title').innerHTML = holiday ? `新增紀錄 <span class="text-sm bg-red-100 text-red-500 px-2.5 py-0.5 rounded-full ml-2 align-middle font-bold">${holiday}</span>` : '新增紀錄';
 
             document.getElementById('task-date').value = dateStr;
+            document.getElementById('task-time').value = '';
             document.getElementById('task-title').value = '';
             document.getElementById('task-location').value = '';
             document.getElementById('task-important').checked = false;
@@ -1059,6 +1086,7 @@
             
             document.getElementById('task-id').value = task.id;
             document.getElementById('task-date').value = task.date;
+            document.getElementById('task-time').value = task.time || '';
             document.getElementById('task-title').value = task.title;
             document.getElementById('task-location').value = task.location || '';
             document.getElementById('task-important').checked = task.isImportant || false;
@@ -1101,6 +1129,7 @@
 
             const taskData = {
                 date: document.getElementById('task-date').value,
+                time: document.getElementById('task-time').value,
                 category: document.querySelector('input[name="task-category"]:checked').value,
                 title: title,
                 location: document.getElementById('task-location').value.trim(),
@@ -1126,6 +1155,33 @@
 
             renderCalendar();
             closeTaskModal();
+        }
+
+        function addToCalendar() {
+            const date = document.getElementById('task-date').value;
+            const time = document.getElementById('task-time').value;
+            const title = document.getElementById('task-title').value.trim();
+            const desc = document.getElementById('task-desc').value.trim();
+            const loc = document.getElementById('task-location').value.trim();
+
+            if (!title) { showToast('請先輸入事項內容', 'error'); return; }
+
+            const startStr = date.replace(/-/g, '') + 'T' + (time ? time.replace(':', '') + '00' : '000000');
+            let endStr = date.replace(/-/g, '') + 'T' + (time ? (parseInt(time.split(':')[0]) + 1).toString().padStart(2, '0') + time.split(':')[1] + '00' : '235959');
+
+            const icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:" + startStr + "\nDTEND:" + endStr + "\nSUMMARY:" + title + "\nDESCRIPTION:" + desc + "\nLOCATION:" + loc + "\nBEGIN:VALARM\nTRIGGER:-PT30M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\nEND:VEVENT\nEND:VCALENDAR";
+
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = title + '.ics';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showToast('已觸發行事曆提醒', 'success');
         }
 
         function confirmDeleteTask() {
