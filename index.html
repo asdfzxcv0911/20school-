@@ -1737,6 +1737,22 @@
             }, { passive: true });
         }
 
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            
+            // 判斷是否為水平滑動（水平距離大於垂直距離，避免干擾上下滑動捲動），且超過滑動門檻
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > SWIPE_THRESHOLD) {
+                if (deltaX < 0) {
+                    // 向左滑動：下一頁 (下個月/下週/明天)
+                    changeDate(1);
+                } else {
+                    // 向右滑動：上一頁 (上個月/上週/昨天)
+                    changeDate(-1);
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             renderScheduleColorPicker();
             renderCalendar();
