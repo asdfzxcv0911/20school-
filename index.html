@@ -782,17 +782,43 @@
         }
 
         function renderMonthView(grid, year, month) {
-            grid.classList.add('grid', 'grid-cols-7');
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            // 檢查當月六日是否有行程，決定手機版的網格比例
+            let hasSatTask = false;
+            let hasSunTask = false;
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const dayOfWeek = new Date(year, month, i).getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    if (getTasksForDate(dateStr).length > 0) {
+                        if (dayOfWeek === 0) hasSunTask = true;
+                        if (dayOfWeek === 6) hasSatTask = true;
+                    }
+                }
+            }
+
+            // 動態配置手機版的網格 (無行程的六日縮小為 0.45 比例，平日平均拉大，以容納更多字)
+            let mobileGridClass = 'grid-cols-7';
+            if (!hasSunTask && !hasSatTask) {
+                mobileGridClass = 'grid-cols-[0.45fr_1fr_1fr_1fr_1fr_1fr_0.45fr]';
+            } else if (hasSunTask && !hasSatTask) {
+                mobileGridClass = 'grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_0.45fr]';
+            } else if (!hasSunTask && hasSatTask) {
+                mobileGridClass = 'grid-cols-[0.45fr_1fr_1fr_1fr_1fr_1fr_1fr]';
+            }
+
+            grid.classList.add('grid', mobileGridClass, 'sm:grid-cols-7'); // sm 以上螢幕維持預設全平均
+
             daysOfWeek.forEach(day => {
                 const dayDiv = document.createElement('div');
                 dayDiv.className = 'text-center py-2 sm:py-3 text-xs sm:text-sm font-bold text-slate-500 bg-slate-50 border-b border-slate-200';
                 dayDiv.innerText = day;
                 grid.appendChild(dayDiv);
             });
-
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const today = new Date();
 
             for (let i = 0; i < firstDay; i++) {
                 const emptyDiv = document.createElement('div');
