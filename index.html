@@ -102,7 +102,7 @@
             </div>
         </div>
         
-        <!-- 課表專屬：多重課表切換列 (縮短寬度並置中) -->
+        <!-- 課表專屬：多重課表切換列 -->
         <div id="schedule-header-controls" class="hidden flex-col items-center justify-center w-full bg-white border-b border-slate-200 py-2.5">
             <div class="flex justify-center items-center gap-2">
                 <div class="relative inline-flex items-center bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg px-2 py-1.5 cursor-pointer shadow-sm border border-indigo-100 w-fit">
@@ -113,7 +113,6 @@
                     </select>
                     <i class="fa-solid fa-chevron-down text-indigo-500 absolute right-2 text-sm pointer-events-none z-0"></i>
                 </div>
-                <!-- 刪除自訂課表按鈕 (平時隱藏) -->
                 <button id="btn-delete-schedule" onclick="deleteCustomSchedule()" class="hidden w-9 h-9 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除此課表">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -207,15 +206,21 @@
             <div class="p-4 sm:p-5 space-y-4 overflow-y-auto min-h-0 touch-pan-y">
                 <input type="hidden" id="task-id">
                 
-                <div class="grid grid-cols-2 gap-3">
+                <!-- 新增：開始與結束日期欄位 -->
+                <div class="grid grid-cols-2 gap-3 mb-1">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">日期</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">開始日期</label>
                         <input type="date" id="task-date" class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">時間 (選填)</label>
-                        <input type="time" id="task-time" class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">結束日期 (選填)</label>
+                        <input type="date" id="task-end-date" class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white">
                     </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">時間 (選填)</label>
+                    <input type="time" id="task-time" class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white">
                 </div>
 
                 <div>
@@ -247,11 +252,11 @@
                     <input type="text" id="task-location" placeholder="例：操場、校長室、體育館..." class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white" autocomplete="off">
                 </div>
 
-                <!-- 雙重勾選：重要業務 與 已完成 (重要業務改為純紅色，不再顯示星星) -->
+                <!-- 雙重勾選：重要業務 與 已完成 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="flex items-center gap-2 bg-red-50 p-3 rounded-lg border border-red-100 cursor-pointer hover:bg-red-100 transition-colors" onclick="document.getElementById('task-important').click()">
                         <input type="checkbox" id="task-important" onclick="event.stopPropagation()" class="w-5 h-5 text-red-500 rounded border-red-300 focus:ring-red-500 cursor-pointer">
-                        <label class="text-sm font-bold text-red-700 cursor-pointer flex-1 pointer-events-none">標記重要</label>
+                        <label class="text-sm font-bold text-red-700 cursor-pointer flex-1 pointer-events-none">標記重要 (紅底)</label>
                     </div>
                     <div class="flex items-center gap-2 bg-slate-100 p-3 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-200 transition-colors" onclick="document.getElementById('task-completed').click()">
                         <input type="checkbox" id="task-completed" onclick="event.stopPropagation()" class="w-5 h-5 text-slate-600 rounded border-slate-300 focus:ring-slate-500 cursor-pointer">
@@ -413,7 +418,6 @@
         // 台灣國定假日表 (獨立劃分 2026 與 2027 年)
         const twHolidays = {};
         
-        // === 2026年 假日表 ===
         twHolidays['2026-01-01']="元旦";
         twHolidays['2026-02-14']="春節連假"; twHolidays['2026-02-15']="春節連假"; twHolidays['2026-02-16']="春節連假"; twHolidays['2026-02-17']="春節連假"; twHolidays['2026-02-18']="春節連假"; twHolidays['2026-02-19']="春節連假"; twHolidays['2026-02-20']="春節連假"; twHolidays['2026-02-21']="春節連假"; twHolidays['2026-02-22']="春節連假";
         twHolidays['2026-02-27']="和平紀念日"; twHolidays['2026-02-28']="和平紀念日"; twHolidays['2026-03-01']="和平紀念日";
@@ -425,7 +429,6 @@
         twHolidays['2026-10-24']="光復節"; twHolidays['2026-10-25']="光復節"; twHolidays['2026-10-26']="光復節";
         twHolidays['2026-12-25']="行憲紀念日"; twHolidays['2026-12-26']="行憲紀念日"; twHolidays['2026-12-27']="行憲紀念日";
 
-        // === 2027年 假日表 ===
         twHolidays['2027-01-01']="元旦"; twHolidays['2027-01-02']="元旦"; twHolidays['2027-01-03']="元旦";
         twHolidays['2027-02-04']="農曆春節"; twHolidays['2027-02-05']="農曆春節"; twHolidays['2027-02-06']="農曆春節"; twHolidays['2027-02-07']="農曆春節"; twHolidays['2027-02-08']="農曆春節"; twHolidays['2027-02-09']="農曆春節"; twHolidays['2027-02-10']="農曆春節";
         twHolidays['2027-02-27']="和平紀念日"; twHolidays['2027-02-28']="和平紀念日"; twHolidays['2027-03-01']="和平紀念日";
@@ -446,18 +449,15 @@
         };
 
         let currentEditingTaskId = null;
-        let customSchedules = []; // 儲存動態新增的課表 (同步雲端)
-        
+        let customSchedules = []; 
         let editingScheduleSlot = null;
         let editingScheduleItemIndex = null;
 
-        // 接收來自雲端的自訂課表清單
         window.updateCustomSchedulesFromCloud = function(list) {
             customSchedules = list || [];
             refreshScheduleSelect();
         };
 
-        // 重新繪製下拉選單內容
         function refreshScheduleSelect() {
             const select = document.getElementById('schedule-selector');
             const currentValue = select.value;
@@ -490,7 +490,7 @@
             const val = select.value;
             
             if (val === 'add_new') {
-                select.value = previousScheduleValue; // 退回前一個選項
+                select.value = previousScheduleValue; 
                 openAddScheduleModal();
             } else {
                 previousScheduleValue = val;
@@ -548,7 +548,6 @@
             const newId = 'custom_' + Date.now();
             customSchedules.push({ id: newId, name: nameInput });
             
-            // 寫入雲端
             if (window.cloudSaveCustomSchedules) {
                 window.cloudSaveCustomSchedules(customSchedules);
             }
@@ -603,7 +602,6 @@
             
             customSchedules = customSchedules.filter(s => s.id !== currentId);
             
-            // 寫入雲端
             if (window.cloudSaveCustomSchedules) {
                 window.cloudSaveCustomSchedules(customSchedules);
             }
@@ -727,7 +725,6 @@
             autoScroll();
         }
 
-        // 專門為滑動手勢準備的切換月份函數
         function changeMonth(delta) {
             const newDate = new Date(state.currentDate);
             newDate.setMonth(newDate.getMonth() + delta);
@@ -750,8 +747,12 @@
             autoScroll();
         }
 
+        // 升級版：教行事曆認識「開始日到結束日」的區間
         function getTasksForDate(dateStr) {
-            return state.tasks.filter(t => t.date === dateStr);
+            return state.tasks.filter(t => {
+                if (!t.endDate) return t.date === dateStr;
+                return dateStr >= t.date && dateStr <= t.endDate;
+            });
         }
 
         function renderCalendar() {
@@ -786,7 +787,6 @@
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const today = new Date();
 
-            // 檢查當月六日是否有行程，決定手機版的網格比例
             let hasSatTask = false;
             let hasSunTask = false;
             
@@ -801,8 +801,6 @@
                 }
             }
 
-            // 使用 minmax(0, 1fr) 強制平日(一到五)絕對平均等寬，不會被過長的字串撐破
-            // 假日(六、日)無行程時，縮小為 0.4fr 節省空間
             let mobileGridClass = 'grid-cols-7';
             if (!hasSunTask && !hasSatTask) {
                 mobileGridClass = 'grid-cols-[minmax(0,0.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.4fr)]';
@@ -812,7 +810,7 @@
                 mobileGridClass = 'grid-cols-[minmax(0,0.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]';
             }
 
-            grid.classList.add('grid', mobileGridClass, 'sm:grid-cols-7'); // sm 以上螢幕維持預設全平均
+            grid.classList.add('grid', mobileGridClass, 'sm:grid-cols-7'); 
 
             daysOfWeek.forEach(day => {
                 const dayDiv = document.createElement('div');
@@ -838,7 +836,7 @@
                 if (isToday) bgClass = 'bg-indigo-50/30';
                 else if (holidayName || isWeekend) bgClass = 'bg-red-50/40';
 
-                dayDiv.className = `p-0.5 sm:p-1 border-b border-r border-slate-100 min-h-[90px] sm:min-h-[120px] transition-colors hover:bg-slate-50 group cursor-pointer ${bgClass}`;
+                dayDiv.className = `p-0 border-b border-r border-slate-100 min-h-[90px] sm:min-h-[120px] transition-colors hover:bg-slate-50 group cursor-pointer ${bgClass}`;
                 dayDiv.onclick = (e) => {
                     if(e.target === dayDiv || e.target.classList.contains('day-header')) openTaskModal(dateStr);
                 };
@@ -855,21 +853,18 @@
                 dateHeaderHtml += `</div>`;
 
                 const tasks = getTasksForDate(dateStr);
-                let tasksHtml = '<div class="space-y-0.5 sm:space-y-1">';
+                let tasksHtml = '<div class="space-y-0.5">';
                 tasks.forEach(task => {
                     const conf = categoryConfig[task.category];
-                    // 重要事項改為紅色背景與文字 (不再使用星星)
-                    let completedClass = task.isImportant ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200' : conf.color;
-                    if (task.isCompleted) completedClass = 'opacity-60 grayscale bg-slate-50';
+                    let completedClass = task.isImportant ? 'bg-red-600 text-white border-red-700 hover:bg-red-700' : conf.color;
+                    if (task.isCompleted) completedClass = 'opacity-60 grayscale bg-slate-50 text-slate-500 border-slate-200';
                     
-                    const locIcon = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="hover:text-indigo-600 transition-colors hidden sm:inline-block" title="在 Google Maps 開啟"><i class="fa-solid fa-map-location-dot text-slate-400 text-[10px] ml-0.5"></i></a>` : '';
-                    const imgIcon = task.imageUrl ? `<i class="fa-solid fa-image text-indigo-400 text-[10px] ml-0.5 hidden sm:inline-block"></i>` : '';
+                    const locIcon = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="hover:text-indigo-600 transition-colors hidden sm:inline-block" title="在 Google Maps 開啟"><i class="fa-solid fa-map-location-dot text-white text-[10px] ml-0.5"></i></a>` : '';
                     
-                    // 手機板字體 9px，強制隱藏溢出不顯示點點點，極限利用空間
                     tasksHtml += `
-                        <div onclick="editTask('${task.id}')" class="text-[9px] sm:text-xs px-0.5 py-0.5 rounded border transition-transform hover:scale-[102%] cursor-pointer flex items-center shadow-sm overflow-hidden whitespace-nowrap ${completedClass}">
-                            <span class="font-bold flex-1 text-left tracking-tighter leading-[1.2]">${task.title}</span>
-                            <div class="hidden sm:flex items-center shrink-0 ml-1 z-10">${locIcon}${imgIcon}</div>
+                        <div onclick="editTask('${task.id}')" class="text-[9px] sm:text-xs px-0 py-0.5 border-l-2 sm:rounded sm:border sm:px-1 transition-transform hover:scale-[102%] cursor-pointer flex items-center shadow-sm overflow-hidden whitespace-nowrap ${completedClass}">
+                            <span class="font-bold flex-1 text-left overflow-hidden whitespace-nowrap leading-[1.2]">${task.title}</span>
+                            <div class="hidden sm:flex items-center shrink-0 ml-1 z-10">${locIcon}</div>
                         </div>
                     `;
                 });
@@ -881,7 +876,7 @@
         }
 
         function renderWeekView(grid, currentDate) {
-            grid.classList.remove('grid', 'grid-cols-7');
+            grid.classList.remove('grid', 'grid-cols-7', 'grid-cols-[minmax(0,0.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.4fr)]');
             grid.classList.add('flex', 'flex-col');
             const startOfWeek = new Date(currentDate);
             startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
@@ -924,23 +919,21 @@
                             `<div class="flex flex-col gap-2">
                                 ${tasks.map(task => {
                                     const conf = categoryConfig[task.category];
-                                    let completedClass = task.isImportant ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200' : conf.color;
-                                    if (task.isCompleted) completedClass = 'opacity-60 grayscale bg-slate-50 border-slate-200';
+                                    let completedClass = task.isImportant ? 'bg-red-600 text-white border-red-700 hover:bg-red-700' : conf.color;
+                                    if (task.isCompleted) completedClass = 'opacity-60 grayscale bg-slate-50 border-slate-200 text-slate-500';
                                     
                                     const textLineThrough = task.isCompleted ? 'line-through text-slate-500' : '';
-                                    const locLink = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="text-xs sm:text-sm font-medium opacity-90 whitespace-nowrap hover:text-indigo-600 hover:underline z-10"><i class="fa-solid fa-map-location-dot mr-1 text-slate-400"></i> ${task.location}</a>` : '';
-                                    const imgThumb = task.imageUrl ? `<div class="mt-1"><img src="${task.imageUrl}" class="h-10 rounded border border-slate-200 object-cover shadow-sm"></div>` : '';
+                                    const locLink = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="text-xs sm:text-sm font-medium opacity-90 whitespace-nowrap hover:text-indigo-200 hover:underline z-10"><i class="fa-solid fa-map-location-dot mr-1"></i> ${task.location}</a>` : '';
 
                                     return `
                                     <div onclick="editTask('${task.id}')" class="p-2 sm:p-2.5 rounded-lg border ${completedClass} flex flex-col md:flex-row md:items-center gap-1 md:gap-3 cursor-pointer hover:shadow-sm transition-all active:scale-[99%] relative">
                                         <div class="flex items-center gap-2 shrink-0">
-                                            <span class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-white ${conf.dot}">${conf.label}</span>
+                                            <span class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-white ${task.isImportant ? 'bg-red-800' : conf.dot}">${task.isImportant ? '重' : conf.label}</span>
                                             <span class="font-bold text-sm sm:text-base ${textLineThrough}">${task.title}</span>
                                         </div>
                                         <div class="flex flex-col md:flex-row flex-1 gap-1 md:gap-3 md:ml-2 overflow-hidden items-start md:items-center">
                                             ${locLink}
                                             ${task.desc ? `<p class="text-xs sm:text-sm opacity-80 truncate flex-1 ${textLineThrough}"><i class="fa-solid fa-align-left mr-1"></i>${task.desc}</p>` : ''}
-                                            ${imgThumb}
                                         </div>
                                     </div>`;
                                 }).join('')}
@@ -989,7 +982,7 @@
                     html += `
                         <div onclick="editTask('${task.id}')" class="p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all group ${completedClass}">
                             <div class="shrink-0 pt-1">
-                                <span class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm ${conf.dot}">${conf.label}</span>
+                                <span class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm ${task.isImportant ? 'bg-red-600' : conf.dot}">${task.isImportant ? '重' : conf.label}</span>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1">
@@ -997,7 +990,6 @@
                                 </div>
                                 ${locLink}
                                 ${task.desc ? `<p class="text-sm text-slate-500 break-words leading-relaxed bg-slate-50/50 p-3 rounded-lg border border-slate-100 ${task.isCompleted ? 'line-through opacity-80' : ''}">${task.desc.replace(/\n/g, '<br>')}</p>` : ''}
-                                ${task.imageUrl ? `<div class="mt-2"><img src="${task.imageUrl}" class="max-h-40 rounded-lg border border-slate-200 shadow-sm object-contain bg-slate-50"></div>` : ''}
                             </div>
                         </div>
                     `;
@@ -1104,7 +1096,7 @@
                                     
                                     return `<div class="flex flex-col sm:flex-row sm:items-center text-sm gap-1 sm:gap-2">
                                         <div class="flex items-center gap-1.5">
-                                            <span class="w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center shrink-0 ${dotClass}">${conf.label}</span>
+                                            <span class="w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center shrink-0 ${t.isImportant ? 'bg-red-600' : dotClass}">${t.isImportant ? '重' : conf.label}</span>
                                             <span class="font-medium ${textLineThrough}">${t.title}</span>
                                         </div>
                                         ${locLink}
@@ -1216,7 +1208,7 @@
                             html += `
                                 <div class="flex flex-col justify-center p-2 -mx-2 rounded-lg cursor-pointer hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors print:hover:bg-transparent print:-mx-0 print:p-1 print:border-none" onclick="editDateFromYearList('${t.date}', '${t.id}')">
                                     <div class="flex items-center gap-2 flex-wrap mb-0.5">
-                                        <span class="px-2 py-0.5 rounded text-white text-[10px] font-bold shadow-sm ${t.isCompleted ? 'bg-slate-400' : conf.dot} print:shadow-none">${conf.label}</span>
+                                        <span class="px-2 py-0.5 rounded text-white text-[10px] font-bold shadow-sm ${t.isCompleted ? 'bg-slate-400' : (t.isImportant ? 'bg-red-600' : conf.dot)} print:shadow-none">${t.isImportant ? '重' : conf.label}</span>
                                         <span class="font-bold text-base sm:text-lg ${doneClass} break-words">${t.title}</span>
                                     </div>
                                     ${t.location ? `<div class="flex items-center mt-0.5">${loc}</div>` : ''}
@@ -1297,6 +1289,7 @@
             }, 100);
         }
 
+        // 確保視窗開啟時將 endDate 清空
         function openTaskModal(dateStr = '') {
             currentEditingTaskId = null;
             document.getElementById('task-id').value = '';
@@ -1310,6 +1303,7 @@
             document.getElementById('modal-title').innerHTML = holiday ? `新增紀錄 <span class="text-sm bg-red-100 text-red-500 px-2.5 py-0.5 rounded-full ml-2 align-middle font-bold">${holiday}</span>` : '新增紀錄';
 
             document.getElementById('task-date').value = dateStr;
+            document.getElementById('task-end-date').value = '';
             document.getElementById('task-time').value = '';
             document.getElementById('task-title').value = '';
             document.getElementById('task-location').value = '';
@@ -1334,6 +1328,7 @@
             });
         }
 
+        // 編輯時載入 endDate
         function editTask(taskId) {
             const task = state.tasks.find(t => t.id === taskId);
             if (!task) return;
@@ -1345,6 +1340,7 @@
             
             document.getElementById('task-id').value = task.id;
             document.getElementById('task-date').value = task.date;
+            document.getElementById('task-end-date').value = task.endDate || '';
             document.getElementById('task-time').value = task.time || '';
             document.getElementById('task-title').value = task.title;
             document.getElementById('task-location').value = task.location || '';
@@ -1384,8 +1380,17 @@
             const title = document.getElementById('task-title').value.trim();
             if (!title) { showToast('請輸入事項內容', 'error'); return; }
 
+            const startDate = document.getElementById('task-date').value;
+            const endDate = document.getElementById('task-end-date').value;
+
+            if (endDate && endDate < startDate) {
+                showToast('結束日期不能早於開始日期', 'error');
+                return;
+            }
+
             const taskData = {
-                date: document.getElementById('task-date').value,
+                date: startDate,
+                endDate: endDate || null,
                 time: document.getElementById('task-time').value,
                 category: document.querySelector('input[name="task-category"]:checked').value,
                 title: title,
@@ -1749,12 +1754,12 @@
             }
         }
 
+        // 避免與拖拉衝突的靈敏滑動換月設定
         function initSwipeGestures() {
             let touchStartX = 0;
             let touchStartY = 0;
 
             document.addEventListener('touchstart', (e) => {
-                // 排除點擊 Modal 或在課表模式下
                 if (e.target.closest('.modal-enter-active') || state.appMode === 'schedule') return;
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
@@ -1762,6 +1767,7 @@
 
             document.addEventListener('touchend', (e) => {
                 if (e.target.closest('.modal-enter-active') || state.appMode === 'schedule') return;
+                
                 let touchEndX = e.changedTouches[0].clientX;
                 let touchEndY = e.changedTouches[0].clientY;
                 handleSwipe(touchStartX, touchEndX, touchStartY, touchEndY);
@@ -1771,12 +1777,11 @@
         function handleSwipe(startX, endX, startY, endY) {
             const diffX = endX - startX;
             const diffY = endY - startY;
-            // 確保是水平滑動（左右滑動距離大於 60px，且是大於上下滑動距離）才切換月份
-            if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
                 if (diffX > 0) {
-                    changeMonth(-1); // 向右滑：上一頁/上一個月
+                    if (typeof changeMonth === 'function') changeMonth(-1); 
                 } else {
-                    changeMonth(1);  // 向左滑：下一頁/下一個月
+                    if (typeof changeMonth === 'function') changeMonth(1);  
                 }
             }
         }
@@ -1818,7 +1823,6 @@
         window.cloudUpdateTask = async (taskId, taskData) => await updateDoc(doc(tasksRef, taskId), taskData);
         window.cloudDeleteTask = async (taskId) => await deleteDoc(doc(tasksRef, taskId));
 
-        // 監聽並同步自訂課表清單
         const schedulesListRef = doc(db, 'settings', 'custom_schedules_list');
         onSnapshot(schedulesListRef, (snapshot) => {
             if (snapshot.exists()) {
@@ -1853,7 +1857,6 @@
             });
         };
 
-        // 載入時預設使用第一個
         window.switchCloudSchedule('my_weekly_schedule');
 
         window.cloudUpdateSchedule = async (newData) => {
