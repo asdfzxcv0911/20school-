@@ -35,7 +35,6 @@
                 background-color: white !important;
             }
             @page { margin: 1cm; }
-            /* 讓印出來的陰影與框線更清晰 */
             .shadow-sm { box-shadow: none !important; border-bottom: 1px solid #e2e8f0 !important; }
             .print-break-inside-avoid { page-break-inside: avoid; }
         }
@@ -48,7 +47,7 @@
         <!-- 內容由 JS 動態填入 -->
     </div>
 
-    <!-- 頂部導航列 (雙棲切換) -->
+    <!-- 頂部導航列 -->
     <div class="sticky top-0 z-40 w-full shadow-sm flex flex-col shrink-0 print:hidden" id="top-nav-bar">
         <header class="bg-indigo-600 text-white border-b border-indigo-700">
             <div class="px-4 py-3 flex justify-between items-center relative">
@@ -103,12 +102,14 @@
             </div>
         </div>
         
-        <!-- 課表專屬：多重課表切換列 -->
-        <div id="schedule-header-controls" class="hidden flex-col">
-            <div class="bg-white border-b border-slate-200 px-3 py-2.5 flex justify-center items-center gap-2">
+        <!-- 課表專屬：多重課表切換列 (縮短寬度並置中) -->
+        <div id="schedule-header-controls" class="hidden flex-col items-center justify-center w-full bg-white border-b border-slate-200 py-2.5">
+            <div class="flex justify-center items-center gap-2">
                 <div class="relative inline-flex items-center bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg px-2 py-1.5 cursor-pointer shadow-sm border border-indigo-100 w-fit">
                     <select id="schedule-selector" onchange="onScheduleSelectChange()" class="bg-transparent text-indigo-900 font-bold text-[15px] sm:text-base outline-none cursor-pointer appearance-none pr-6 relative z-10 text-center">
-                        <!-- 選項由 JS 動態生成 -->
+                        <option value="my_weekly_schedule">🧑‍🏫 我的課表</option>
+                        <option value="office_weekly_schedule">🏢 學務處課表</option>
+                        <option value="add_new">➕ 新增其他課表...</option>
                     </select>
                     <i class="fa-solid fa-chevron-down text-indigo-500 absolute right-2 text-sm pointer-events-none z-0"></i>
                 </div>
@@ -120,8 +121,8 @@
         </div>
     </div>
 
-    <!-- 行事曆主內容區 -->
-    <main id="calendar-main" class="flex-1 w-full max-w-6xl mx-auto p-3 sm:p-6 pb-24 relative print:hidden">
+    <!-- 行事曆主內容區 (最大化寬度 px-1) -->
+    <main id="calendar-main" class="flex-1 w-full max-w-6xl mx-auto px-1 py-3 sm:p-6 pb-24 relative print:hidden">
         <!-- 年度右上角：年度總表清單按鈕 -->
         <div id="year-list-btn-container" class="hidden absolute top-4 sm:top-7 right-4 sm:right-7 z-10">
             <button onclick="openYearlyListModal()" class="bg-indigo-600 text-white hover:bg-indigo-700 px-3 py-1.5 rounded-lg shadow-sm text-sm font-bold flex items-center gap-1.5 transition-colors border border-indigo-700 shadow-md">
@@ -246,11 +247,11 @@
                     <input type="text" id="task-location" placeholder="例：操場、校長室、體育館..." class="w-full px-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-base bg-white" autocomplete="off">
                 </div>
 
-                <!-- 雙重勾選：重要業務 與 已完成 -->
+                <!-- 雙重勾選：重要業務 與 已完成 (重要業務改為純紅色，不再顯示星星) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="flex items-center gap-2 bg-amber-50/50 p-3 rounded-lg border border-amber-100 cursor-pointer hover:bg-amber-100 transition-colors" onclick="document.getElementById('task-important').click()">
-                        <input type="checkbox" id="task-important" onclick="event.stopPropagation()" class="w-5 h-5 text-amber-500 rounded border-amber-300 focus:ring-amber-500 cursor-pointer">
-                        <label class="text-sm font-bold text-slate-700 cursor-pointer flex-1 pointer-events-none">標記重要 <i class="fa-solid fa-star text-amber-400 ml-1"></i></label>
+                    <div class="flex items-center gap-2 bg-red-50 p-3 rounded-lg border border-red-100 cursor-pointer hover:bg-red-100 transition-colors" onclick="document.getElementById('task-important').click()">
+                        <input type="checkbox" id="task-important" onclick="event.stopPropagation()" class="w-5 h-5 text-red-500 rounded border-red-300 focus:ring-red-500 cursor-pointer">
+                        <label class="text-sm font-bold text-red-700 cursor-pointer flex-1 pointer-events-none">標記重要</label>
                     </div>
                     <div class="flex items-center gap-2 bg-slate-100 p-3 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-200 transition-colors" onclick="document.getElementById('task-completed').click()">
                         <input type="checkbox" id="task-completed" onclick="event.stopPropagation()" class="w-5 h-5 text-slate-600 rounded border-slate-300 focus:ring-slate-500 cursor-pointer">
@@ -450,7 +451,7 @@
         let editingScheduleSlot = null;
         let editingScheduleItemIndex = null;
 
-        // 接收來自雲端的自訂課表清單 (取代 localStorage)
+        // 接收來自雲端的自訂課表清單
         window.updateCustomSchedulesFromCloud = function(list) {
             customSchedules = list || [];
             refreshScheduleSelect();
@@ -547,7 +548,7 @@
             const newId = 'custom_' + Date.now();
             customSchedules.push({ id: newId, name: nameInput });
             
-            // 寫入雲端 (取代 localStorage)
+            // 寫入雲端
             if (window.cloudSaveCustomSchedules) {
                 window.cloudSaveCustomSchedules(customSchedules);
             }
@@ -602,7 +603,7 @@
             
             customSchedules = customSchedules.filter(s => s.id !== currentId);
             
-            // 寫入雲端 (取代 localStorage)
+            // 寫入雲端
             if (window.cloudSaveCustomSchedules) {
                 window.cloudSaveCustomSchedules(customSchedules);
             }
@@ -663,7 +664,6 @@
                 if(taskFab) taskFab.classList.add('hidden');
                 renderSchedule();
                 
-                // 自動捲動至最上方
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
@@ -722,6 +722,15 @@
             else if (state.view === 'week') newDate.setDate(newDate.getDate() + (delta * 7));
             else if (state.view === 'month') newDate.setMonth(newDate.getMonth() + delta);
             else if (state.view === 'year') newDate.setFullYear(newDate.getFullYear() + delta);
+            state.currentDate = newDate;
+            renderCalendar();
+            autoScroll();
+        }
+
+        // 專門為滑動手勢準備的切換月份函數
+        function changeMonth(delta) {
+            const newDate = new Date(state.currentDate);
+            newDate.setMonth(newDate.getMonth() + delta);
             state.currentDate = newDate;
             renderCalendar();
             autoScroll();
@@ -787,7 +796,7 @@
 
             for (let i = 0; i < firstDay; i++) {
                 const emptyDiv = document.createElement('div');
-                emptyDiv.className = 'p-1 sm:p-2 border-b border-r border-slate-100 bg-slate-50/50 min-h-[90px] sm:min-h-[120px]';
+                emptyDiv.className = 'p-0.5 sm:p-2 border-b border-r border-slate-100 bg-slate-50/50 min-h-[90px] sm:min-h-[120px]';
                 grid.appendChild(emptyDiv);
             }
 
@@ -802,19 +811,19 @@
                 if (isToday) bgClass = 'bg-indigo-50/30';
                 else if (holidayName || isWeekend) bgClass = 'bg-red-50/40';
 
-                dayDiv.className = `p-1 border-b border-r border-slate-100 min-h-[90px] sm:min-h-[120px] transition-colors hover:bg-slate-50 group cursor-pointer ${bgClass}`;
+                dayDiv.className = `p-0.5 sm:p-1 border-b border-r border-slate-100 min-h-[90px] sm:min-h-[120px] transition-colors hover:bg-slate-50 group cursor-pointer ${bgClass}`;
                 dayDiv.onclick = (e) => {
                     if(e.target === dayDiv || e.target.classList.contains('day-header')) openTaskModal(dateStr);
                 };
                 
                 let dateHeaderHtml = `<div class="day-header flex justify-between items-start mb-1 px-0.5">`;
                 if (isToday) {
-                    dateHeaderHtml += `<span class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center bg-indigo-600 text-white rounded-full text-xs sm:text-sm font-bold shadow-sm">${i}</span>`;
+                    dateHeaderHtml += `<span class="w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center bg-indigo-600 text-white rounded-full text-xs sm:text-sm font-bold shadow-sm">${i}</span>`;
                 } else if (holidayName) {
-                    dateHeaderHtml += `<span class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center bg-red-100 text-red-500 rounded-full text-xs sm:text-sm font-bold">${i}</span>`;
+                    dateHeaderHtml += `<span class="w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center bg-red-100 text-red-500 rounded-full text-xs sm:text-sm font-bold">${i}</span>`;
                 } else {
                     let textClass = isWeekend ? 'text-red-500 font-bold' : 'text-slate-700 font-medium';
-                    dateHeaderHtml += `<span class="text-sm sm:text-base ${textClass} ml-1 mt-0.5">${i}</span>`;
+                    dateHeaderHtml += `<span class="text-xs sm:text-base ${textClass} ml-0.5 mt-0.5">${i}</span>`;
                 }
                 dateHeaderHtml += `</div>`;
 
@@ -822,18 +831,18 @@
                 let tasksHtml = '<div class="space-y-0.5 sm:space-y-1">';
                 tasks.forEach(task => {
                     const conf = categoryConfig[task.category];
-                    const completedClass = task.isCompleted ? 'opacity-60 grayscale bg-slate-50' : conf.color;
+                    // 重要事項改為紅色背景與文字 (不再使用星星)
+                    let completedClass = task.isImportant ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200' : conf.color;
+                    if (task.isCompleted) completedClass = 'opacity-60 grayscale bg-slate-50';
                     
-                    // 手機隱藏星星大圖示，改為微型星星，隱藏地圖/圖片
-                    const mobileStar = task.isImportant ? '<span class="sm:hidden text-amber-500 ml-0.5 text-[9px] shrink-0">★</span>' : '';
-                    const starIcon = task.isImportant ? '<i class="fa-solid fa-star text-amber-400 text-[10px] ml-0.5 hidden sm:inline-block"></i>' : '';
                     const locIcon = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="hover:text-indigo-600 transition-colors hidden sm:inline-block" title="在 Google Maps 開啟"><i class="fa-solid fa-map-location-dot text-slate-400 text-[10px] ml-0.5"></i></a>` : '';
                     const imgIcon = task.imageUrl ? `<i class="fa-solid fa-image text-indigo-400 text-[10px] ml-0.5 hidden sm:inline-block"></i>` : '';
                     
+                    // 手機板字體 9px，強制隱藏溢出不顯示點點點，極限利用空間
                     tasksHtml += `
-                        <div onclick="editTask('${task.id}')" class="truncate text-[10px] sm:text-xs px-0.5 sm:px-1.5 py-0.5 sm:py-1 rounded border transition-transform hover:scale-[102%] cursor-pointer flex items-center shadow-sm overflow-hidden ${completedClass}">
-                            <span class="truncate font-bold flex-1 text-center sm:text-left tracking-tighter sm:tracking-normal">${task.title}${mobileStar}</span>
-                            <div class="hidden sm:flex items-center shrink-0 ml-1 z-10">${locIcon}${imgIcon}${starIcon}</div>
+                        <div onclick="editTask('${task.id}')" class="text-[9px] sm:text-xs px-0.5 py-0.5 rounded border transition-transform hover:scale-[102%] cursor-pointer flex items-center shadow-sm overflow-hidden whitespace-nowrap ${completedClass}">
+                            <span class="font-bold flex-1 text-left tracking-tighter leading-[1.2]">${task.title}</span>
+                            <div class="hidden sm:flex items-center shrink-0 ml-1 z-10">${locIcon}${imgIcon}</div>
                         </div>
                     `;
                 });
@@ -888,7 +897,9 @@
                             `<div class="flex flex-col gap-2">
                                 ${tasks.map(task => {
                                     const conf = categoryConfig[task.category];
-                                    const completedClass = task.isCompleted ? 'opacity-60 grayscale bg-slate-50 border-slate-200' : conf.color;
+                                    let completedClass = task.isImportant ? 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200' : conf.color;
+                                    if (task.isCompleted) completedClass = 'opacity-60 grayscale bg-slate-50 border-slate-200';
+                                    
                                     const textLineThrough = task.isCompleted ? 'line-through text-slate-500' : '';
                                     const locLink = task.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="text-xs sm:text-sm font-medium opacity-90 whitespace-nowrap hover:text-indigo-600 hover:underline z-10"><i class="fa-solid fa-map-location-dot mr-1 text-slate-400"></i> ${task.location}</a>` : '';
                                     const imgThumb = task.imageUrl ? `<div class="mt-1"><img src="${task.imageUrl}" class="h-10 rounded border border-slate-200 object-cover shadow-sm"></div>` : '';
@@ -898,7 +909,6 @@
                                         <div class="flex items-center gap-2 shrink-0">
                                             <span class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-white ${conf.dot}">${conf.label}</span>
                                             <span class="font-bold text-sm sm:text-base ${textLineThrough}">${task.title}</span>
-                                            ${task.isImportant ? '<i class="fa-solid fa-star text-amber-400"></i>' : ''}
                                         </div>
                                         <div class="flex flex-col md:flex-row flex-1 gap-1 md:gap-3 md:ml-2 overflow-hidden items-start md:items-center">
                                             ${locLink}
@@ -943,8 +953,10 @@
                 html += '<div class="space-y-3 sm:space-y-4">';
                 tasks.forEach(task => {
                     const conf = categoryConfig[task.category];
-                    const completedClass = task.isCompleted ? 'opacity-60 grayscale bg-slate-50' : 'bg-white';
-                    const textLineThrough = task.isCompleted ? 'line-through text-slate-500' : 'text-slate-800 group-hover:text-indigo-600';
+                    let completedClass = task.isImportant ? 'bg-red-50 border-red-200' : 'bg-white';
+                    if (task.isCompleted) completedClass = 'opacity-60 grayscale bg-slate-50';
+                    
+                    const textLineThrough = task.isCompleted ? 'line-through text-slate-500' : (task.isImportant ? 'text-red-700' : 'text-slate-800 group-hover:text-indigo-600');
                     const locLink = task.location ? `<div class="text-sm font-medium text-slate-600 mb-2 z-10"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="hover:text-indigo-600 hover:underline flex items-center w-fit"><i class="fa-solid fa-map-location-dot mr-1.5 text-slate-400"></i>${task.location}</a></div>` : '';
 
                     html += `
@@ -955,7 +967,6 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1">
                                     <h4 class="font-bold text-base sm:text-lg transition-colors ${textLineThrough}">${task.title}</h4>
-                                    ${task.isImportant ? '<i class="fa-solid fa-star text-amber-400 text-lg"></i>' : ''}
                                 </div>
                                 ${locLink}
                                 ${task.desc ? `<p class="text-sm text-slate-500 break-words leading-relaxed bg-slate-50/50 p-3 rounded-lg border border-slate-100 ${task.isCompleted ? 'line-through opacity-80' : ''}">${task.desc.replace(/\n/g, '<br>')}</p>` : ''}
@@ -1060,15 +1071,14 @@
                             `<div class="flex flex-col gap-1.5">
                                 ${tasks.map(t => {
                                     const conf = categoryConfig[t.category];
-                                    const star = t.isImportant ? '<i class="fa-solid fa-star text-amber-400 text-[10px] ml-1"></i>' : '';
                                     const locLink = t.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location)}" target="_blank" onclick="event.stopPropagation()" class="text-xs text-slate-500 ml-2 hover:text-indigo-600 hover:underline z-10"><i class="fa-solid fa-map-location-dot mr-1 text-slate-400"></i>${t.location}</a>` : '';
-                                    const textLineThrough = t.isCompleted ? 'line-through text-slate-400' : 'text-slate-700';
+                                    const textLineThrough = t.isCompleted ? 'line-through text-slate-400' : (t.isImportant ? 'text-red-600' : 'text-slate-700');
                                     const dotClass = t.isCompleted ? 'bg-slate-300' : conf.dot;
                                     
                                     return `<div class="flex flex-col sm:flex-row sm:items-center text-sm gap-1 sm:gap-2">
                                         <div class="flex items-center gap-1.5">
                                             <span class="w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center shrink-0 ${dotClass}">${conf.label}</span>
-                                            <span class="font-medium ${textLineThrough}">${t.title}${star}</span>
+                                            <span class="font-medium ${textLineThrough}">${t.title}</span>
                                         </div>
                                         ${locLink}
                                     </div>`;
@@ -1173,15 +1183,14 @@
                             
                         dayTasks.forEach(t => {
                             const conf = categoryConfig[t.category];
-                            const star = t.isImportant ? '<i class="fa-solid fa-star text-amber-400 ml-1"></i>' : '';
                             const loc = t.location ? `<span class="text-sm text-slate-500 ml-2 font-medium"><i class="fa-solid fa-map-location-dot mr-1.5 text-slate-400"></i>${t.location}</span>` : '';
-                            const doneClass = t.isCompleted ? 'line-through text-slate-400' : 'text-slate-800';
+                            const doneClass = t.isCompleted ? 'line-through text-slate-400' : (t.isImportant ? 'text-red-600' : 'text-slate-800');
                             
                             html += `
                                 <div class="flex flex-col justify-center p-2 -mx-2 rounded-lg cursor-pointer hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors print:hover:bg-transparent print:-mx-0 print:p-1 print:border-none" onclick="editDateFromYearList('${t.date}', '${t.id}')">
                                     <div class="flex items-center gap-2 flex-wrap mb-0.5">
                                         <span class="px-2 py-0.5 rounded text-white text-[10px] font-bold shadow-sm ${t.isCompleted ? 'bg-slate-400' : conf.dot} print:shadow-none">${conf.label}</span>
-                                        <span class="font-bold text-base sm:text-lg ${doneClass} break-words">${t.title}${star}</span>
+                                        <span class="font-bold text-base sm:text-lg ${doneClass} break-words">${t.title}</span>
                                     </div>
                                     ${t.location ? `<div class="flex items-center mt-0.5">${loc}</div>` : ''}
                                 </div>`;
@@ -1516,7 +1525,6 @@
                         html += `<div class="flex-1 w-full flex flex-col justify-center items-center gap-0.5 relative z-0 pb-3">`;
                         items.forEach((data, index) => {
                             const colorTheme = scheduleColors[data.color] || scheduleColors['gray'];
-                            // 取消底色，保留字體顏色，手機版字體設定為8.5px，解決裁切(leading-[1.2] px-0.5)
                             html += `
                             <div onclick="openScheduleModal(${day}, '${period.id}', ${index})" class="w-full rounded py-1 flex flex-col justify-center items-center hover:bg-slate-50 transition-colors active:scale-95 cursor-pointer overflow-hidden">
                                 <div class="font-bold text-[8.5px] sm:text-[14px] ${colorTheme.text} leading-[1.2] px-0.5 text-center whitespace-nowrap tracking-tighter sm:tracking-normal w-full overflow-hidden text-ellipsis">${data.name}</div>
@@ -1525,7 +1533,6 @@
                         });
                         html += `</div>`;
                         
-                        // 隱藏版絕對定位追加按鈕
                         html += `<div onclick="openScheduleModal(${day}, '${period.id}', null)" class="absolute bottom-0 right-0 sm:bottom-0.5 sm:right-0.5 w-5 h-5 flex justify-center items-center text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded cursor-pointer transition-all opacity-30 md:opacity-0 md:group-hover:opacity-100 z-10" title="追加">
                             <i class="fa-solid fa-plus text-[8px] sm:text-[10px]"></i>
                         </div>`;
@@ -1715,41 +1722,34 @@
             }
         }
 
-        let touchStartX = 0;
-        let touchEndX = 0;
-        let touchStartY = 0;
-        let touchEndY = 0;
-        const SWIPE_THRESHOLD = 50; 
-
         function initSwipeGestures() {
-            const container = document.body; 
-            container.addEventListener('touchstart', e => {
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            document.addEventListener('touchstart', (e) => {
                 // 排除點擊 Modal 或在課表模式下
                 if (e.target.closest('.modal-enter-active') || state.appMode === 'schedule') return;
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
             }, { passive: true });
 
-            container.addEventListener('touchend', e => {
+            document.addEventListener('touchend', (e) => {
                 if (e.target.closest('.modal-enter-active') || state.appMode === 'schedule') return;
-                touchEndX = e.changedTouches[0].screenX;
-                touchEndY = e.changedTouches[0].screenY;
-                handleSwipe();
+                let touchEndX = e.changedTouches[0].clientX;
+                let touchEndY = e.changedTouches[0].clientY;
+                handleSwipe(touchStartX, touchEndX, touchStartY, touchEndY);
             }, { passive: true });
         }
 
-        function handleSwipe() {
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
-            
-            // 判斷水平滑動（水平距離大於垂直距離），且超過滑動門檻 50px
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > SWIPE_THRESHOLD) {
-                if (deltaX < 0) {
-                    // 向左滑動：下一頁
-                    changeDate(1);
+        function handleSwipe(startX, endX, startY, endY) {
+            const diffX = endX - startX;
+            const diffY = endY - startY;
+            // 確保是水平滑動（左右滑動距離大於 60px，且是大於上下滑動距離）才切換月份
+            if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0) {
+                    changeMonth(-1); // 向右滑：上一頁/上一個月
                 } else {
-                    // 向右滑動：上一頁
-                    changeDate(-1);
+                    changeMonth(1);  // 向左滑：下一頁/下一個月
                 }
             }
         }
@@ -1791,7 +1791,7 @@
         window.cloudUpdateTask = async (taskId, taskData) => await updateDoc(doc(tasksRef, taskId), taskData);
         window.cloudDeleteTask = async (taskId) => await deleteDoc(doc(tasksRef, taskId));
 
-        // 監聽並同步自訂課表清單 (取代 localStorage)
+        // 監聽並同步自訂課表清單
         const schedulesListRef = doc(db, 'settings', 'custom_schedules_list');
         onSnapshot(schedulesListRef, (snapshot) => {
             if (snapshot.exists()) {
