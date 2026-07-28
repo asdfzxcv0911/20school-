@@ -801,14 +801,15 @@
                 }
             }
 
-            // 動態配置手機版的網格 (無行程的六日縮小為 0.45 比例，平日平均拉大，以容納更多字)
+            // 使用 minmax(0, 1fr) 強制平日(一到五)絕對平均等寬，不會被過長的字串撐破
+            // 假日(六、日)無行程時，縮小為 0.4fr 節省空間
             let mobileGridClass = 'grid-cols-7';
             if (!hasSunTask && !hasSatTask) {
-                mobileGridClass = 'grid-cols-[0.45fr_1fr_1fr_1fr_1fr_1fr_0.45fr]';
+                mobileGridClass = 'grid-cols-[minmax(0,0.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.4fr)]';
             } else if (hasSunTask && !hasSatTask) {
-                mobileGridClass = 'grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_0.45fr]';
+                mobileGridClass = 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.4fr)]';
             } else if (!hasSunTask && hasSatTask) {
-                mobileGridClass = 'grid-cols-[0.45fr_1fr_1fr_1fr_1fr_1fr_1fr]';
+                mobileGridClass = 'grid-cols-[minmax(0,0.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]';
             }
 
             grid.classList.add('grid', mobileGridClass, 'sm:grid-cols-7'); // sm 以上螢幕維持預設全平均
