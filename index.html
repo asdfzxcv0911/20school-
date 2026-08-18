@@ -1205,6 +1205,9 @@
                             const loc = t.location ? `<span class="text-sm text-slate-500 ml-2 font-medium"><i class="fa-solid fa-map-location-dot mr-1.5 text-slate-400"></i>${t.location}</span>` : '';
                             const doneClass = t.isCompleted ? 'line-through text-slate-400' : (t.isImportant ? 'text-red-600' : 'text-slate-800');
                             
+                            // 新增備註顯示邏輯 (帶有獨立淡色背景，增加層次感且不破壞原有排版)
+                            const descHtml = t.desc ? `<div class="text-xs sm:text-sm text-slate-500 mt-1.5 bg-slate-50 p-2 rounded-md border border-slate-100 print:border-none print:p-0 print:bg-transparent ${t.isCompleted ? 'line-through opacity-70' : ''}"><i class="fa-solid fa-align-left mr-1.5 opacity-70"></i>${t.desc.replace(/\n/g, '<br>')}</div>` : '';
+                            
                             html += `
                                 <div class="flex flex-col justify-center p-2 -mx-2 rounded-lg cursor-pointer hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors print:hover:bg-transparent print:-mx-0 print:p-1 print:border-none" onclick="editDateFromYearList('${t.date}', '${t.id}')">
                                     <div class="flex items-center gap-2 flex-wrap mb-0.5">
@@ -1212,6 +1215,7 @@
                                         <span class="font-bold text-base sm:text-lg ${doneClass} break-words">${t.title}</span>
                                     </div>
                                     ${t.location ? `<div class="flex items-center mt-0.5">${loc}</div>` : ''}
+                                    ${descHtml}
                                 </div>`;
                         });
                         
