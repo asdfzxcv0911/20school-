@@ -128,6 +128,9 @@
                     <button onclick="setRollcallMode('attendance')" id="btn-mode-attendance" class="px-3 py-1 text-sm font-medium rounded-md bg-white shadow-sm text-slate-700 transition-colors text-center"><i class="fa-solid fa-user-check mr-1 text-emerald-500"></i>點名</button>
                     <button onclick="setRollcallMode('grade')" id="btn-mode-grade" class="px-3 py-1 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition-colors text-center"><i class="fa-solid fa-pen-nib mr-1 text-amber-500"></i>成績</button>
                 </div>
+                <button onclick="openRollcallHistoryModal()" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-indigo-700 transition-colors flex items-center gap-1.5" title="開啟歷史總表">
+                    <i class="fa-solid fa-table-list"></i><span class="hidden sm:inline">歷史總表</span>
+                </button>
                 <button id="btn-generate-sub-link" onclick="generateSubLink()" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-slate-700 transition-colors flex items-center gap-1.5">
                     <i class="fa-solid fa-link"></i><span class="hidden sm:inline">代課連結</span>
                 </button>
@@ -273,6 +276,26 @@
             </div>
             <div class="overflow-y-auto flex-1 p-2 sm:p-4 bg-slate-50" id="monthly-list-container">
                 <!-- 清單內容由 JS 生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 歷史總表 Modal -->
+    <div id="rollcall-history-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-2 sm:p-4 transition-opacity print:hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl overflow-hidden transform transition-all modal-enter flex flex-col h-[90dvh]" id="rollcall-history-modal-content">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-table-list text-indigo-600"></i><span id="history-modal-title">班級歷史總表</span></h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="saveHistoryChanges()" class="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 transition-colors shadow-sm active:scale-95">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> 儲存修改
+                    </button>
+                    <button onclick="closeRollcallHistoryModal()" class="text-slate-400 hover:text-slate-600 p-2 bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors ml-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-auto flex-1 p-0 bg-slate-50 relative" id="history-table-container">
+                <!-- 總表由 JS 產生 -->
             </div>
         </div>
     </div>
@@ -494,7 +517,9 @@
             rollcallMode: 'attendance', 
             rollcallStudents: [],
             attendanceRecords: {}, // 獨立儲存出缺席
-            gradeRecords: {}       // 獨立儲存成績
+            gradeRecords: {},      // 獨立儲存成績
+            historyDates: [],      // 儲存所有歷史日期/項目
+            historyData: {}        // 儲存完整歷史二維陣列
         };
 
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
@@ -682,7 +707,8 @@
                 header.innerText = '平時成績登記';
                 if(itemInput) itemInput.classList.remove('hidden');
             }
-            renderRollcallList();
+            // 切換模式時重新載入以刷新歷史總表結構
+            loadRollcallData();
         }
 
         async function loadRollcallData() {
@@ -699,9 +725,23 @@
             // 1. 抓取點名表 (基本名單) 與 成績表 (歷史紀錄)
             const sheetNameAtt = `${className}_點名`;
             const sheetNameGrade = `${className}_成績`;
-            const urlAtt = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetNameAtt)}&_t=${Date.now()}`;
-            const urlGrade = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetNameGrade)}&_t=${Date.now()}`;
+            const urlAtt = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(sheetNameAtt)}&_t=${Date.now()}`;
+            const urlGrade = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(sheetNameGrade)}&_t=${Date.now()}`;
             
+            // Google API 日期標題防呆解析器
+            const parseGoogleDateHeader = (label) => {
+                if (!label) return '';
+                let str = label.toString();
+                const match = str.match(/Date\((\d+),\s*(\d+),\s*(\d+)\)/);
+                if (match) {
+                    const y = match[1];
+                    const m = String(parseInt(match[2]) + 1).padStart(2, '0');
+                    const d = String(match[3]).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+                return str;
+            };
+
             try {
                 // 同時抓取點名與成績資料
                 const [resAtt, resGrade] = await Promise.all([
@@ -711,13 +751,14 @@
 
                 // 解析成績歷史
                 let gradeHistoryMap = {};
+                let dataGrade = null;
                 if (resGrade && resGrade.ok) {
                     const textGrade = await resGrade.text();
                     const jsonStringGrade = textGrade.substring(textGrade.indexOf('{'), textGrade.lastIndexOf('}') + 1);
                     try {
-                        const dataGrade = JSON.parse(jsonStringGrade);
+                        dataGrade = JSON.parse(jsonStringGrade);
                         if (dataGrade.table && dataGrade.table.rows) {
-                            const gradeCols = dataGrade.table.cols.map(c => c ? c.label : '');
+                            const gradeCols = dataGrade.table.cols.map(c => parseGoogleDateHeader(c ? c.label : ''));
                             dataGrade.table.rows.forEach(row => {
                                 if (row.c && row.c[0] && row.c[0].v !== null) {
                                     const seat = row.c[0].v.toString();
@@ -740,7 +781,7 @@
                 
                 let students = [];
                 if (dataAtt.table && dataAtt.table.rows) {
-                    const cols = dataAtt.table.cols.map(c => c ? c.label : '');
+                    const cols = dataAtt.table.cols.map(c => parseGoogleDateHeader(c ? c.label : ''));
                     
                     dataAtt.table.rows.forEach(row => {
                         if (row.c && row.c[0] && row.c[1]) {
@@ -765,6 +806,34 @@
                 }
                 
                 state.rollcallStudents = students;
+                
+                // --- 建立完整歷史總表資料結構 ---
+                state.historyDates = [];
+                state.historyData = {};
+                
+                let activeData = state.rollcallMode === 'attendance' ? dataAtt : dataGrade;
+                if (activeData && activeData.table && activeData.table.rows) {
+                    const activeCols = activeData.table.cols.map(c => parseGoogleDateHeader(c ? c.label : ''));
+                    for (let i = 3; i < activeCols.length; i++) {
+                        if (activeCols[i]) state.historyDates.push(activeCols[i].toString());
+                    }
+                    
+                    // 自動按日期排序
+                    state.historyDates.sort();
+                    
+                    activeData.table.rows.forEach(row => {
+                        if (row.c && row.c[0] && row.c[0].v !== null) {
+                            const seat = row.c[0].v.toString();
+                            state.historyData[seat] = {};
+                            for (let i = 3; i < activeCols.length; i++) {
+                                if (activeCols[i]) {
+                                    state.historyData[seat][activeCols[i].toString()] = (row.c[i] && row.c[i].v !== null) ? row.c[i].v.toString() : '';
+                                }
+                            }
+                        }
+                    });
+                }
+                // ------------------------------
                 
                 // 2. 切換班級時先清空暫存，避免看到上一班的畫面
                 state.attendanceRecords = {};
@@ -855,28 +924,7 @@
                     `;
                 }
                 
-                html += `</div></div>`;
-
-                // 顯示歷史紀錄區塊
-                let historyHtml = '';
-                if (state.rollcallMode === 'attendance' && student.history && student.history.attendance.length > 0) {
-                    historyHtml = student.history.attendance.slice(-5).map(h => {
-                        let color = h.value === '出席' ? 'text-emerald-600 bg-emerald-50' : (h.value === '缺席' ? 'text-red-600 bg-red-50' : 'text-amber-600 bg-amber-50');
-                        return `<span class="px-2 py-0.5 rounded text-[11px] font-bold border border-white ${color} whitespace-nowrap">${h.label.slice(5)}: ${h.value}</span>`;
-                    }).join('');
-                } else if (state.rollcallMode === 'grade' && student.history && student.history.grades.length > 0) {
-                    historyHtml = student.history.grades.slice(-5).map(h => {
-                        return `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 border border-white whitespace-nowrap">${h.label.slice(5)}: ${h.value}分</span>`;
-                    }).join('');
-                }
-                
-                if (historyHtml) {
-                    html += `<div class="w-full bg-slate-50/50 px-3 py-1.5 flex gap-1.5 overflow-x-auto hide-scrollbar pl-[80px] sm:pl-[120px] items-center shadow-inner">
-                        <span class="text-[10px] text-slate-400 font-bold shrink-0 mr-1"><i class="fa-solid fa-clock-rotate-left"></i> 歷史:</span>
-                        ${historyHtml}
-                    </div>`;
-                }
-                html += `</div>`;
+                html += `</div></div></div>`;
             });
             
             container.innerHTML = html;
@@ -929,8 +977,53 @@
                     body: JSON.stringify(payload)
                 }).then(() => {
                     showToast(`已成功將 ${className} 資料寫入 Excel！`, 'success');
-                    // 寫入後自動重新載入名單，讓畫面立刻顯示最新的歷史紀錄！
-                    setTimeout(() => loadRollcallData(), 1500);
+                    
+                    /* ================================================= */
+                    /* 核心修正：強制即時更新本地歷史紀錄，無視 Google 快取延遲 */
+                    /* ================================================= */
+                    
+                    // 1. 將新日期加入歷史總表的日期清單中
+                    if (!state.historyDates.includes(dateStr)) {
+                        state.historyDates.push(dateStr);
+                        state.historyDates.sort(); // 確保新增後也自動排序
+                    }
+                    
+                    // 2. 更新每位學生的歷史資料
+                    const recordsToSave = state.rollcallMode === 'attendance' ? state.attendanceRecords : state.gradeRecords;
+                    
+                    state.rollcallStudents.forEach(student => {
+                        const seat = student.seat;
+                        if (!state.historyData[seat]) state.historyData[seat] = {};
+                        
+                        let val = recordsToSave[seat] !== undefined ? recordsToSave[seat] : '';
+                        
+                        // 轉換點名代號以符合歷史總表的中文格式
+                        if (state.rollcallMode === 'attendance') {
+                            if (val === '出' || val === '') val = '出席';
+                            else if (val === '曠') val = '缺席';
+                            else if (val === '假') val = '請假';
+                            else if (val === '遲') val = '遲到';
+                        }
+                        
+                        // 更新全班歷史總表資料矩陣
+                        state.historyData[seat][dateStr] = val;
+
+                        // 同步更新主畫面上，學生個人小卡片底下的歷史紀錄
+                        if (state.rollcallMode === 'attendance') {
+                            student.history.attendance = student.history.attendance.filter(h => h.label !== dateStr);
+                            student.history.attendance.push({ label: dateStr, value: val });
+                        } else {
+                            student.history.grades = student.history.grades.filter(h => h.label !== dateStr);
+                            student.history.grades.push({ label: dateStr, value: val });
+                        }
+                    });
+
+                    // 3. 重新渲染畫面，立刻顯示更新的結果
+                    renderRollcallList();
+                    
+                    // 移除原本會導致舊快取覆蓋畫面的重新載入機制
+                    // setTimeout(() => loadRollcallData(), 1500); 
+
                 }).catch((e) => {
                     showToast('網路異常，寫入失敗', 'error');
                 });
@@ -952,6 +1045,230 @@
             document.body.removeChild(tempInput);
             
             showToast('已複製代課專屬連結！代課老師可自由切換班級', 'success');
+        }
+
+        /* --- 歷史總表功能 --- */
+        let historyEditBuffer = {}; // 暫存修改內容 { date: { seat: value } }
+
+        // 新增：歷史總表「滑鼠拖曳滾動」功能
+        function initHistoryTableDrag() {
+            const container = document.getElementById('history-table-container');
+            let isDown = false;
+            let startX;
+            let startY;
+            let scrollLeft;
+            let scrollTop;
+
+            container.addEventListener('mousedown', (e) => {
+                // 如果點擊的是輸入框或下拉選單，不觸發拖曳，確保能正常輸入與修改
+                if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' || e.target.tagName === 'OPTION') return;
+                
+                isDown = true;
+                container.classList.add('cursor-grabbing');
+                startX = e.pageX - container.offsetLeft;
+                startY = e.pageY - container.offsetTop;
+                scrollLeft = container.scrollLeft;
+                scrollTop = container.scrollTop;
+            });
+
+            container.addEventListener('mouseleave', () => {
+                isDown = false;
+                container.classList.remove('cursor-grabbing');
+            });
+
+            container.addEventListener('mouseup', () => {
+                isDown = false;
+                container.classList.remove('cursor-grabbing');
+            });
+
+            container.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault(); // 防止拖曳時反白選取到文字
+                const x = e.pageX - container.offsetLeft;
+                const y = e.pageY - container.offsetTop;
+                const walkX = (x - startX) * 1.5; // 拖拉速度倍率
+                const walkY = (y - startY) * 1.5;
+                container.scrollLeft = scrollLeft - walkX;
+                container.scrollTop = scrollTop - walkY;
+            });
+        }
+
+        function openRollcallHistoryModal() {
+            if (!state.rollcallStudents || state.rollcallStudents.length === 0) {
+                showToast('請先選擇班級並等待名單載入', 'error');
+                return;
+            }
+            
+            historyEditBuffer = {}; // 清空暫存
+            const className = document.getElementById('rollcall-class-selector').value;
+            const modeName = state.rollcallMode === 'attendance' ? '點名' : '成績';
+            document.getElementById('history-modal-title').innerText = `${className} 歷史${modeName}總表`;
+            
+            renderHistoryTable();
+            
+            const modal = document.getElementById('rollcall-history-modal');
+            const content = document.getElementById('rollcall-history-modal-content');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                content.classList.remove('modal-enter');
+                content.classList.add('modal-enter-active');
+            });
+        }
+
+        function closeRollcallHistoryModal() {
+            const modal = document.getElementById('rollcall-history-modal');
+            const content = document.getElementById('rollcall-history-modal-content');
+            content.classList.remove('modal-enter-active');
+            content.classList.add('modal-exit-active');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                content.classList.remove('modal-exit-active');
+                content.classList.add('modal-enter');
+            }, 200);
+        }
+
+        function renderHistoryTable() {
+            const container = document.getElementById('history-table-container');
+            if (state.historyDates.length === 0) {
+                container.innerHTML = `<div class="p-10 flex flex-col items-center justify-center text-slate-400 h-full"><i class="fa-solid fa-folder-open text-5xl mb-3 text-slate-300"></i><p class="font-medium">尚無任何歷史紀錄</p></div>`;
+                return;
+            }
+
+            let html = `<table class="w-full min-w-max border-collapse bg-white">
+                <thead class="sticky top-0 z-20 bg-slate-100 shadow-sm">
+                    <tr>
+                        <th class="border border-slate-200 p-2 text-center text-sm font-bold text-slate-600 bg-slate-200 sticky left-0 z-30 w-16">座號</th>
+                        <th class="border border-slate-200 p-2 text-center text-sm font-bold text-slate-600 bg-slate-200 sticky left-16 z-30 w-24 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">姓名</th>`;
+            
+            // 產生日期/項目表頭
+            state.historyDates.forEach(date => {
+                html += `<th class="border border-slate-200 p-2 text-center text-xs font-bold text-slate-600 min-w-[80px]">${date}</th>`;
+            });
+            html += `</tr></thead><tbody>`;
+
+            // 產生學生列與內容
+            state.rollcallStudents.forEach(student => {
+                const seat = student.seat;
+                const name = student.name;
+                html += `<tr>
+                    <td class="border border-slate-200 p-2 text-center text-sm font-bold text-slate-500 bg-slate-50 sticky left-0 z-10">${seat}</td>
+                    <td class="border border-slate-200 p-2 text-center text-sm font-bold text-slate-800 bg-slate-50 sticky left-16 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] truncate max-w-[6rem]">${name}</td>`;
+                
+                state.historyDates.forEach(date => {
+                    let val = state.historyData[seat] && state.historyData[seat][date] !== undefined ? state.historyData[seat][date] : '';
+                    
+                    if (state.rollcallMode === 'attendance') {
+                        // 點名模式：下拉選單選取
+                        let bgClass = '';
+                        if(val === '缺席' || val === '曠') bgClass = 'bg-red-100 text-red-700';
+                        else if(val === '請假' || val === '假') bgClass = 'bg-orange-100 text-orange-700';
+                        else if(val === '遲到' || val === '遲') bgClass = 'bg-yellow-100 text-yellow-700';
+                        else if(val === '出席' || val === '出') bgClass = 'text-slate-700';
+                        
+                        html += `<td class="border border-slate-200 p-1 text-center hover:bg-slate-50 transition-colors">
+                            <select onchange="bufferHistoryEdit('${date}', '${seat}', this.value)" class="w-full text-center text-sm p-1.5 rounded outline-none border border-transparent focus:border-indigo-400 focus:bg-white font-bold transition-colors cursor-pointer appearance-none ${bgClass}">
+                                <option value="" ${val===''?'selected':''}></option>
+                                <option value="出" ${val==='出席'||val==='出'?'selected':''}>出席</option>
+                                <option value="曠" ${val==='缺席'||val==='曠'?'selected':''}>缺席</option>
+                                <option value="假" ${val==='請假'||val==='假'?'selected':''}>請假</option>
+                                <option value="遲" ${val==='遲到'||val==='遲'?'selected':''}>遲到</option>
+                            </select>
+                        </td>`;
+                    } else {
+                        // 成績模式：直接打字
+                        html += `<td class="border border-slate-200 p-1 text-center hover:bg-slate-50 transition-colors">
+                            <input type="text" onchange="bufferHistoryEdit('${date}', '${seat}', this.value)" value="${val}" class="w-16 text-center text-sm p-1.5 rounded outline-none border border-transparent hover:border-slate-300 focus:border-indigo-400 focus:bg-white font-bold text-blue-700 bg-transparent transition-colors">
+                        </td>`;
+                    }
+                });
+                html += `</tr>`;
+            });
+            
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function bufferHistoryEdit(date, seat, value) {
+            if (!historyEditBuffer[date]) historyEditBuffer[date] = {};
+            historyEditBuffer[date][seat] = value;
+            
+            if(!state.historyData[seat]) state.historyData[seat] = {};
+            
+            // 轉換並更新介面顏色
+            if (state.rollcallMode === 'attendance') {
+                 let disp = value;
+                 if(value === '出') disp = '出席';
+                 if(value === '曠') disp = '缺席';
+                 if(value === '假') disp = '請假';
+                 if(value === '遲') disp = '遲到';
+                 state.historyData[seat][date] = disp;
+                 
+                 const selectEl = event.target;
+                 selectEl.className = `w-full text-center text-sm p-1.5 rounded outline-none border border-transparent focus:border-indigo-400 focus:bg-white font-bold transition-colors cursor-pointer appearance-none ${value==='曠'?'bg-red-100 text-red-700':(value==='假'?'bg-orange-100 text-orange-700':(value==='遲'?'bg-yellow-100 text-yellow-700':'text-slate-700'))}`;
+            } else {
+                 state.historyData[seat][date] = value;
+            }
+        }
+
+        async function saveHistoryChanges() {
+            const datesToUpdate = Object.keys(historyEditBuffer);
+            if (datesToUpdate.length === 0) {
+                showToast('沒有任何修改需要儲存', 'success');
+                closeRollcallHistoryModal();
+                return;
+            }
+
+            const className = document.getElementById('rollcall-class-selector').value;
+            const targetSheetName = state.rollcallMode === 'attendance' ? `${className}_點名` : `${className}_成績`;
+            const gasUrl = "https://script.google.com/macros/s/AKfycbzC8jr5xffcVuWfCOGWgoCyhIMXa_ZMQbucL7l-zGidTwNywWzbMItLKrGCB-SaZ2vnSw/exec";
+
+            showToast(`正在批次覆寫 ${datesToUpdate.length} 筆欄位，請稍候...`, 'success');
+
+            try {
+                // 將有修改的每一天/每一個項目，依序推送到 Excel 後台進行覆寫
+                for (let dateStr of datesToUpdate) {
+                    const payload = {
+                        className: targetSheetName,
+                        date: dateStr, 
+                        type: state.rollcallMode === 'attendance' ? '點名' : '成績',
+                        records: historyEditBuffer[dateStr] 
+                    };
+
+                    await fetch(gasUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    // --- 核心修正：將總表補測/修改的內容，同步回主畫面的個人小卡歷史區 ---
+                    state.rollcallStudents.forEach(student => {
+                        const seat = student.seat;
+                        // 取出已經在 bufferHistoryEdit 中更新好的最新值
+                        const updatedVal = state.historyData[seat][dateStr]; 
+                        
+                        if (updatedVal !== undefined && updatedVal !== null) {
+                            if (state.rollcallMode === 'attendance') {
+                                let idx = student.history.attendance.findIndex(h => h.label === dateStr);
+                                if (idx !== -1) student.history.attendance[idx].value = updatedVal;
+                                else student.history.attendance.push({ label: dateStr, value: updatedVal });
+                            } else {
+                                let idx = student.history.grades.findIndex(h => h.label === dateStr);
+                                if (idx !== -1) student.history.grades[idx].value = updatedVal;
+                                else student.history.grades.push({ label: dateStr, value: updatedVal });
+                            }
+                        }
+                    });
+                }
+                
+                showToast('補測/修改已全數儲存至 Excel！', 'success');
+                closeRollcallHistoryModal();
+                
+                // 儲存完畢後重新渲染主畫面，讓小卡片的歷史記錄保持最新
+                renderRollcallList();
+                
+            } catch(e) {
+                showToast('網路異常，部分寫入失敗', 'error');
+            }
         }
 
         /* --- 系統介面切換 (行事曆 / 點名表 / 課表) --- */
@@ -1506,17 +1823,14 @@
                     const locLink = task.location ? `<div class="text-sm font-medium text-slate-600 mb-2 z-10"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.location)}" target="_blank" onclick="event.stopPropagation()" class="hover:text-indigo-600 hover:underline flex items-center w-fit"><i class="fa-solid fa-map-location-dot mr-1.5 text-slate-400"></i>${task.location}</a></div>` : '';
 
                     html += `
-                        <div onclick="editTask('${task.id}')" class="p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all group ${completedClass}">
-                            <div class="shrink-0 pt-1">
-                                <span class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm ${task.isImportant ? 'bg-red-600' : conf.dot}">${task.isImportant ? '重' : conf.label}</span>
+                        <div onclick="editTask('${task.id}')" class="p-3 sm:p-4 rounded-xl border flex flex-col gap-2 cursor-pointer hover:shadow-md transition-all active:scale-[99%] relative overflow-hidden group ${completedClass}">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full ${task.isImportant ? 'bg-red-500' : conf.dot}"></span>
+                                <span class="font-bold text-base sm:text-lg ${textLineThrough}">${task.title}</span>
+                                <span class="ml-auto text-[10px] sm:text-xs font-bold px-2 py-1 rounded bg-slate-100 text-slate-500">${conf.label}</span>
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <h4 class="font-bold text-base sm:text-lg transition-colors ${textLineThrough}">${task.title}</h4>
-                                </div>
-                                ${locLink}
-                                ${task.desc ? `<p class="text-sm text-slate-500 break-words leading-relaxed bg-slate-50/50 p-3 rounded-lg border border-slate-100 ${task.isCompleted ? 'line-through opacity-80' : ''}">${task.desc.replace(/\n/g, '<br>')}</p>` : ''}
-                            </div>
+                            ${locLink}
+                            ${task.desc ? `<p class="text-xs sm:text-sm text-slate-500 ${textLineThrough}"><i class="fa-solid fa-align-left mr-1.5 opacity-70"></i>${task.desc.replace(/\n/g, '<br>')}</p>` : ''}
                         </div>
                     `;
                 });
@@ -2335,6 +2649,7 @@
             renderScheduleColorPicker();
             renderCalendar();
             initSwipeGestures();
+            initHistoryTableDrag(); // 啟動歷史總表拖曳功能
             
             // 通用代課老師模式攔截檢查
             const urlParams = new URLSearchParams(window.location.search);
