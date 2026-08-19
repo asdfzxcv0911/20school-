@@ -120,6 +120,7 @@
                 </div>
                 
                 <input type="date" id="rollcall-date-picker" onchange="loadRollcallData()" class="px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                <input type="text" id="rollcall-item-input" placeholder="測驗項目 (如: 跳繩)" class="hidden px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none w-28 sm:w-32 transition-all">
             </div>
             
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -664,6 +665,7 @@
             const btnAttendance = document.getElementById('btn-mode-attendance');
             const btnGrade = document.getElementById('btn-mode-grade');
             const header = document.getElementById('rollcall-action-header');
+            const itemInput = document.getElementById('rollcall-item-input');
             
             if (mode === 'attendance') {
                 btnAttendance.classList.add('bg-white', 'shadow-sm', 'text-slate-700');
@@ -671,12 +673,14 @@
                 btnGrade.classList.remove('bg-white', 'shadow-sm', 'text-slate-700');
                 btnGrade.classList.add('text-slate-500', 'hover:text-slate-700');
                 header.innerText = '出缺席狀況';
+                if(itemInput) itemInput.classList.add('hidden');
             } else {
                 btnGrade.classList.add('bg-white', 'shadow-sm', 'text-slate-700');
                 btnGrade.classList.remove('text-slate-500', 'hover:text-slate-700');
                 btnAttendance.classList.remove('bg-white', 'shadow-sm', 'text-slate-700');
                 btnAttendance.classList.add('text-slate-500', 'hover:text-slate-700');
                 header.innerText = '平時成績登記';
+                if(itemInput) itemInput.classList.remove('hidden');
             }
             renderRollcallList();
         }
@@ -692,19 +696,53 @@
             document.getElementById('rollcall-loading').classList.remove('hidden');
             document.getElementById('rollcall-loading').classList.add('flex');
 
-            // 1. 從 Google Sheets 抓取名單 (破解快取，加入 timestamp 參數)
-            const sheetName = `${className}_點名`;
-            const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&_t=${Date.now()}`;
+            // 1. 抓取點名表 (基本名單) 與 成績表 (歷史紀錄)
+            const sheetNameAtt = `${className}_點名`;
+            const sheetNameGrade = `${className}_成績`;
+            const urlAtt = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetNameAtt)}&_t=${Date.now()}`;
+            const urlGrade = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetNameGrade)}&_t=${Date.now()}`;
             
             try {
-                const res = await fetch(url);
-                const text = await res.text();
-                const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-                const data = JSON.parse(jsonString);
+                // 同時抓取點名與成績資料
+                const [resAtt, resGrade] = await Promise.all([
+                    fetch(urlAtt).catch(() => null),
+                    fetch(urlGrade).catch(() => null)
+                ]);
+
+                // 解析成績歷史
+                let gradeHistoryMap = {};
+                if (resGrade && resGrade.ok) {
+                    const textGrade = await resGrade.text();
+                    const jsonStringGrade = textGrade.substring(textGrade.indexOf('{'), textGrade.lastIndexOf('}') + 1);
+                    try {
+                        const dataGrade = JSON.parse(jsonStringGrade);
+                        if (dataGrade.table && dataGrade.table.rows) {
+                            const gradeCols = dataGrade.table.cols.map(c => c ? c.label : '');
+                            dataGrade.table.rows.forEach(row => {
+                                if (row.c && row.c[0] && row.c[0].v !== null) {
+                                    const seat = row.c[0].v.toString();
+                                    gradeHistoryMap[seat] = [];
+                                    for (let i = 3; i < gradeCols.length; i++) {
+                                        if (gradeCols[i] && row.c[i] && row.c[i].v !== null && row.c[i].v !== '') {
+                                            gradeHistoryMap[seat].push({ label: gradeCols[i].toString(), value: row.c[i].v.toString() });
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    } catch(e) { console.warn("成績表尚無資料"); }
+                }
+
+                // 解析點名歷史與基本名單
+                const textAtt = await resAtt.text();
+                const jsonStringAtt = textAtt.substring(textAtt.indexOf('{'), textAtt.lastIndexOf('}') + 1);
+                const dataAtt = JSON.parse(jsonStringAtt);
                 
                 let students = [];
-                if (data.table && data.table.rows) {
-                    data.table.rows.forEach(row => {
+                if (dataAtt.table && dataAtt.table.rows) {
+                    const cols = dataAtt.table.cols.map(c => c ? c.label : '');
+                    
+                    dataAtt.table.rows.forEach(row => {
                         if (row.c && row.c[0] && row.c[1]) {
                             const seat = row.c[0].v;
                             const name = row.c[1].v;
@@ -714,7 +752,13 @@
                             }
                             
                             if (seat !== null && name !== null && !isNaN(seat)) {
-                                students.push({ seat: seat.toString(), name: name.toString(), gender: gender });
+                                let history = { attendance: [], grades: gradeHistoryMap[seat.toString()] || [] };
+                                for (let i = 3; i < cols.length; i++) {
+                                    if (cols[i] && row.c[i] && row.c[i].v !== null && row.c[i].v !== '') {
+                                        history.attendance.push({ label: cols[i].toString(), value: row.c[i].v.toString() });
+                                    }
+                                }
+                                students.push({ seat: seat.toString(), name: name.toString(), gender: gender, history: history });
                             }
                         }
                     });
@@ -782,10 +826,11 @@
                 }
 
                 html += `
-                <div class="flex items-center text-sm hover:bg-slate-50 transition-colors ${genderStyle.includes('bg-') ? genderStyle.split(' ')[1] : ''}">
-                    <div class="w-12 sm:w-16 p-3 text-center border-r border-slate-100 font-bold text-slate-500 shrink-0">${seat}</div>
-                    <div class="w-20 sm:w-28 p-3 text-center border-r border-slate-100 font-bold ${genderStyle.split(' ')[0]} shrink-0 truncate">${student.name}${genderBadge}</div>
-                    <div class="flex-1 p-2 sm:p-3 flex items-center justify-center">`;
+                <div class="flex flex-col border-b border-slate-100 hover:bg-slate-50 transition-colors ${genderStyle.includes('bg-') ? genderStyle.split(' ')[1] : ''}">
+                    <div class="flex items-center text-sm w-full">
+                        <div class="w-12 sm:w-16 p-3 text-center border-r border-slate-100 font-bold text-slate-500 shrink-0">${seat}</div>
+                        <div class="w-20 sm:w-28 p-3 text-center border-r border-slate-100 font-bold ${genderStyle.split(' ')[0]} shrink-0 truncate">${student.name}${genderBadge}</div>
+                        <div class="flex-1 p-2 sm:p-3 flex items-center justify-center">`;
                 
                 if (state.rollcallMode === 'attendance') {
                     // 點名模式
@@ -811,6 +856,27 @@
                 }
                 
                 html += `</div></div>`;
+
+                // 顯示歷史紀錄區塊
+                let historyHtml = '';
+                if (state.rollcallMode === 'attendance' && student.history && student.history.attendance.length > 0) {
+                    historyHtml = student.history.attendance.slice(-5).map(h => {
+                        let color = h.value === '出席' ? 'text-emerald-600 bg-emerald-50' : (h.value === '缺席' ? 'text-red-600 bg-red-50' : 'text-amber-600 bg-amber-50');
+                        return `<span class="px-2 py-0.5 rounded text-[11px] font-bold border border-white ${color} whitespace-nowrap">${h.label.slice(5)}: ${h.value}</span>`;
+                    }).join('');
+                } else if (state.rollcallMode === 'grade' && student.history && student.history.grades.length > 0) {
+                    historyHtml = student.history.grades.slice(-5).map(h => {
+                        return `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 border border-white whitespace-nowrap">${h.label.slice(5)}: ${h.value}分</span>`;
+                    }).join('');
+                }
+                
+                if (historyHtml) {
+                    html += `<div class="w-full bg-slate-50/50 px-3 py-1.5 flex gap-1.5 overflow-x-auto hide-scrollbar pl-[80px] sm:pl-[120px] items-center shadow-inner">
+                        <span class="text-[10px] text-slate-400 font-bold shrink-0 mr-1"><i class="fa-solid fa-clock-rotate-left"></i> 歷史:</span>
+                        ${historyHtml}
+                    </div>`;
+                }
+                html += `</div>`;
             });
             
             container.innerHTML = html;
@@ -827,19 +893,49 @@
 
         async function saveRollcallDataToCloud() {
             const className = document.getElementById('rollcall-class-selector').value;
-            const dateStr = document.getElementById('rollcall-date-picker').value;
-            if (!className || !dateStr) return;
+            const dateStrRaw = document.getElementById('rollcall-date-picker').value;
+            const itemStr = document.getElementById('rollcall-item-input') ? document.getElementById('rollcall-item-input').value.trim() : '';
             
-            const recordId = `${dateStr}_${className}`;
-            showToast('儲存中...', 'success');
+            if (!className || !dateStrRaw) return;
+            if (state.rollcallMode === 'grade' && !itemStr) {
+                showToast('請輸入測驗項目 (如: 跳繩)', 'error');
+                return;
+            }
+            
+            // 組合日期與項目 (成績模式下會變成 "2026-03-05 跳繩")
+            const dateStr = state.rollcallMode === 'grade' ? `${dateStrRaw} ${itemStr}` : dateStrRaw;
+            
+            // 關鍵修改：依照模式動態決定目標分頁 (401_點名 或 401_成績)
+            const targetSheetName = state.rollcallMode === 'attendance' ? `${className}_點名` : `${className}_成績`;
+            
+            showToast('同步至 Google 試算表中...', 'success');
 
-            if (window.cloudSaveRollcall) {
-                const isSuccess = await window.cloudSaveRollcall(recordId, state.attendanceRecords, state.gradeRecords);
-                if (isSuccess) {
-                    showToast(`已成功儲存 ${className} 的資料！`, 'success');
-                } else {
-                    showToast('儲存失敗，請檢查資料庫安全性規則', 'error');
-                }
+            const payload = {
+                className: targetSheetName,
+                date: dateStr,
+                type: state.rollcallMode === 'attendance' ? '點名' : '成績',
+                records: state.rollcallMode === 'attendance' ? state.attendanceRecords : state.gradeRecords
+            };
+
+            const gasUrl = "https://script.google.com/macros/s/AKfycbzC8jr5xffcVuWfCOGWgoCyhIMXa_ZMQbucL7l-zGidTwNywWzbMItLKrGCB-SaZ2vnSw/exec";
+
+            try {
+                // 使用 text/plain 格式，直接無視 Google 的跨網域防護牆強制送出
+                fetch(gasUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8",
+                    },
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    showToast(`已成功將 ${className} 資料寫入 Excel！`, 'success');
+                    // 寫入後自動重新載入名單，讓畫面立刻顯示最新的歷史紀錄！
+                    setTimeout(() => loadRollcallData(), 1500);
+                }).catch((e) => {
+                    showToast('網路異常，寫入失敗', 'error');
+                });
+            } catch(e) {
+                showToast('儲存發生錯誤', 'error');
             }
         }
 
