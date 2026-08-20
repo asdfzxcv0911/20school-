@@ -726,7 +726,7 @@
                 btnGrade.classList.remove('text-slate-500', 'hover:text-slate-700');
                 btnAttendance.classList.remove('bg-white', 'shadow-sm', 'text-slate-700');
                 btnAttendance.classList.add('text-slate-500', 'hover:text-slate-700');
-                header.innerText = '平時成績登記';
+                header.innerText = '平時成績';
                 if(itemInput) itemInput.classList.remove('hidden');
             }
             // 切換模式時重新載入以刷新歷史總表結構
@@ -1397,16 +1397,69 @@
                         datePicker.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
                     }
                     
-                    // 自動載入上次選擇的班級
-                    const lastClass = localStorage.getItem('lastRollcallClass');
-                    if (lastClass && previousRollcallClassValue !== lastClass) {
-                        const select = document.getElementById('rollcall-class-selector');
-                        let exists = Array.from(select.options).some(opt => opt.value === lastClass);
-                        if(exists) {
-                            select.value = lastClass;
-                            onRollcallClassChange();
+                    // 自動連動課表邏輯 (依照時間、節次自動判定)
+                    (async () => {
+                        const now = new Date();
+                        const dayOfWeek = now.getDay();
+                        let autoClass = null;
+
+                        // 判斷是否為星期一到星期五，且具備讀取課表函數
+                        if (dayOfWeek >= 1 && dayOfWeek <= 5 && window.fetchMyWeeklySchedule) {
+                            const currentTime = now.getHours() * 60 + now.getMinutes();
+                            let currentPeriodId = null;
+
+                            // 找尋當前時間落在哪一節課
+                            for (let period of schedulePeriods) {
+                                if (period.isBreak) continue;
+                                const [startStr, endStr] = period.time.split('~');
+                                const [sH, sM] = startStr.split(':').map(Number);
+                                const [eH, eM] = endStr.split(':').map(Number);
+                                if (currentTime >= (sH * 60 + sM) && currentTime <= (eH * 60 + eM)) {
+                                    currentPeriodId = period.id;
+                                    break;
+                                }
+                            }
+
+                            if (currentPeriodId) {
+                                // 強制向雲端讀取 "🧑‍🏫 我的課表"
+                                const mySchedule = await window.fetchMyWeeklySchedule();
+                                if (mySchedule) {
+                                    const key = `${dayOfWeek}-${currentPeriodId}`;
+                                    const rawData = mySchedule[key];
+                                    if (rawData) {
+                                        const items = Array.isArray(rawData) ? rawData : [rawData];
+                                        const item = items[0]; // 一節課只抓第一個事項
+                                        if (item && item.location) {
+                                            const loc = item.location.trim();
+                                            // 從既有班級名單中尋找包含該字眼的班級，或是直接使用該字串
+                                            autoClass = rollcallClasses.find(c => loc.includes(c)) || loc;
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    }
+
+                        const select = document.getElementById('rollcall-class-selector');
+                        if (autoClass) {
+                            // 若是剛建立的新班級，確保選單選項存在
+                            if (!Array.from(select.options).some(opt => opt.value === autoClass)) {
+                                select.insertAdjacentHTML('afterbegin', `<option value="${autoClass}">${autoClass}</option>`);
+                            }
+                            select.value = autoClass;
+                            onRollcallClassChange();
+                            showToast(`根據課表，已自動為您切換至 ${autoClass} 班`, 'success');
+                        } else {
+                            // 若為下課、空堂、放學，則恢復為上一次手動點選的班級
+                            const lastClass = localStorage.getItem('lastRollcallClass');
+                            if (lastClass && previousRollcallClassValue !== lastClass) {
+                                let exists = Array.from(select.options).some(opt => opt.value === lastClass);
+                                if(exists) {
+                                    select.value = lastClass;
+                                    onRollcallClassChange();
+                                }
+                            }
+                        }
+                    })();
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -2796,6 +2849,19 @@
         window.cloudUpdateSchedule = async (newData) => {
             const currentId = document.getElementById('schedule-selector').value;
             await setDoc(doc(db, 'settings', currentId), newData);
+        };
+
+        // 獨立讀取 "🧑‍🏫 我的課表" 的函數 (供點名表自動連動使用)
+        window.fetchMyWeeklySchedule = async () => {
+            try {
+                const scheduleRef = doc(db, 'settings', 'my_weekly_schedule');
+                const snap = await getDoc(scheduleRef);
+                if (snap.exists()) return snap.data();
+                return null;
+            } catch(e) {
+                console.error("無法讀取個人課表", e);
+                return null;
+            }
         };
 
         // 3. 點名與成績資料 (全面升級即時監聽)
