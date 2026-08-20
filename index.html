@@ -863,7 +863,7 @@
                 
                 // 3. 直接從 Excel 歷史資料中，把當天的紀錄還原到按鈕上 (捨棄舊的雲端快取，以 Excel 為唯一基準)
                 const itemStr = document.getElementById('rollcall-item-input') ? document.getElementById('rollcall-item-input').value.trim() : '';
-                const targetDate = state.rollcallMode === 'grade' ? (itemStr ? `${dateStr} ${itemStr}` : dateStr) : dateStr;
+                const targetDate = state.rollcallMode === 'grade' ? (itemStr ? `${dateStr}\n${itemStr}` : dateStr) : dateStr;
 
                 state.rollcallStudents.forEach(student => {
                     const seat = student.seat;
@@ -886,7 +886,7 @@
                 document.getElementById('rollcall-loading').classList.remove('flex');
                 
                 if (students.length === 0) {
-                    showToast(`找不到「${sheetName}」的名單，請確認 Google 試算表設定`, 'error');
+                    showToast(`找不到「${sheetNameAtt}」的名單，請確認 Google 試算表設定`, 'error');
                     document.getElementById('rollcall-empty').classList.remove('hidden');
                 } else {
                     document.getElementById('rollcall-content').classList.remove('hidden');
@@ -906,7 +906,7 @@
             const container = document.getElementById('rollcall-student-list');
             let html = '';
             
-            state.rollcallStudents.forEach(student => {
+            state.rollcallStudents.forEach((student, index) => {
                 const seat = student.seat;
                 
                 // 判斷性別顏色
@@ -945,7 +945,7 @@
                     // 成績模式 (加入專屬ID以便即時更新不中斷輸入)
                     const score = state.gradeRecords[seat] !== undefined ? state.gradeRecords[seat] : '';
                     html += `
-                        <input type="number" id="grade-input-${seat}" value="${score}" onchange="updateStudentRecord('${seat}', 'grade', this.value)" placeholder="分數" class="w-24 text-center px-3 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-700 bg-white shadow-sm">
+                        <input type="number" id="grade-input-${seat}" inputmode="decimal" pattern="[0-9]*" value="${score}" onchange="updateStudentRecord('${seat}', 'grade', this.value)" onkeydown="handleGradeEnter(event, ${index})" placeholder="分數" class="w-24 text-center px-3 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-700 bg-white shadow-sm">
                     `;
                 }
                 
@@ -954,6 +954,23 @@
             
             container.innerHTML = html;
         }
+
+        window.handleGradeEnter = function(e, currentIndex) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const nextIndex = currentIndex + 1;
+                if (nextIndex < state.rollcallStudents.length) {
+                    const nextSeat = state.rollcallStudents[nextIndex].seat;
+                    const nextInput = document.getElementById(`grade-input-${nextSeat}`);
+                    if (nextInput) {
+                        nextInput.focus();
+                        nextInput.select(); // 全選數字，方便直接覆蓋輸入
+                    }
+                } else {
+                    e.target.blur(); // 最後一位同學按 Enter 就取消聚焦
+                }
+            }
+        };
 
         function updateStudentRecord(seat, field, value) {
             if (field === 'attendance') {
@@ -1002,8 +1019,8 @@
                 return;
             }
             
-            // 組合日期與項目 (成績模式下會變成 "2026-03-05 跳繩")
-            const dateStr = state.rollcallMode === 'grade' ? `${dateStrRaw} ${itemStr}` : dateStrRaw;
+            // 組合日期與項目 (成績模式下會變成 "2026-03-05\n跳繩")
+            const dateStr = state.rollcallMode === 'grade' ? `${dateStrRaw}\n${itemStr}` : dateStrRaw;
             
             // 關鍵修改：依照模式動態決定目標分頁 (401_點名 或 401_成績)
             const targetSheetName = state.rollcallMode === 'attendance' ? `${className}_點名` : `${className}_成績`;
@@ -1194,7 +1211,8 @@
             
             // 產生日期/項目表頭
             state.historyDates.forEach(date => {
-                html += `<th class="border border-slate-200 p-2 text-center text-xs font-bold text-slate-600 min-w-[80px]">${date}</th>`;
+                const displayDate = date.replace(/\n/g, '<br>');
+                html += `<th class="border border-slate-200 p-2 text-center text-xs font-bold text-slate-600 min-w-[80px]">${displayDate}</th>`;
             });
             html += `</tr></thead><tbody>`;
 
