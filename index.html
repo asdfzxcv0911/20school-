@@ -159,12 +159,11 @@
         <div id="schedule-header-controls" class="hidden flex-col items-center justify-center w-full bg-white border-b border-slate-200 py-2.5">
             <div class="flex justify-center items-center gap-2">
                 <div class="relative inline-flex items-center bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg px-2 py-1.5 cursor-pointer shadow-sm border border-indigo-100 w-fit">
-                    <select id="schedule-selector" onchange="onScheduleSelectChange()" class="bg-transparent text-indigo-900 font-bold text-[15px] sm:text-base outline-none cursor-pointer appearance-none pr-6 relative z-10 text-center">
+                    <select id="schedule-selector" onchange="onScheduleSelectChange()" class="bg-transparent text-indigo-900 font-bold text-[15px] sm:text-base outline-none cursor-pointer appearance-none relative z-10 text-center">
                         <option value="my_weekly_schedule">🧑‍🏫 我的課表</option>
                         <option value="office_weekly_schedule">🏢 學務處課表</option>
                         <!-- 動態生成其他課表 -->
                     </select>
-                    <i class="fa-solid fa-chevron-down text-indigo-500 absolute right-2 text-sm pointer-events-none z-0"></i>
                 </div>
                 <button id="btn-delete-schedule" onclick="deleteCustomSchedule()" class="hidden w-9 h-9 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除此課表">
                     <i class="fa-solid fa-trash-can"></i>
@@ -493,7 +492,7 @@
     <div id="add-schedule-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4 transition-opacity print:hidden">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all modal-enter" id="add-schedule-modal-content">
             <div class="p-5 border-b border-slate-100 bg-slate-50">
-                <h3 class="text-lg font-bold text-slate-800">新增其他課表</h3>
+                <h3 class="text-lg font-bold text-slate-800">新增課表</h3>
             </div>
             <div class="p-5">
                 <label class="block text-sm font-medium text-slate-700 mb-2">請輸入課表名稱 (例如：王大明老師)</label>
@@ -1485,7 +1484,7 @@
                 optionsHtml += `<option value="${s.id}">📝 ${s.name}</option>`;
             });
             
-            optionsHtml += `<option value="add_new">➕ 新增其他課表...</option>`;
+            optionsHtml += `<option value="add_new">➕ 新增課表...</option>`;
             select.innerHTML = optionsHtml;
             
             if (Array.from(select.options).some(opt => opt.value === currentValue)) {
