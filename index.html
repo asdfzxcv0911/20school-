@@ -34,9 +34,21 @@
                 print-color-adjust: exact !important; 
                 background-color: white !important;
             }
-            @page { margin: 1cm; }
+            @page { margin: 1cm; size: A4 portrait; }
             .shadow-sm { box-shadow: none !important; border-bottom: 1px solid #e2e8f0 !important; }
             .print-break-inside-avoid { page-break-inside: avoid; }
+            
+            /* 課表列印：去背景省墨水，保留文字顏色 */
+            .print-schedule-container .bg-emerald-50,
+            .print-schedule-container .bg-blue-50,
+            .print-schedule-container .bg-amber-50,
+            .print-schedule-container .bg-purple-50,
+            .print-schedule-container .bg-rose-50,
+            .print-schedule-container .bg-slate-100,
+            .print-schedule-container .bg-slate-50,
+            .print-schedule-container .bg-slate-100\/50 {
+                background-color: transparent !important;
+            }
         }
 
         /* 手機版 [單月] 行事曆專屬：強制撐寬至 750px，確保 8 個字不裁切，並開啟平滑橫向滾動 */
@@ -158,13 +170,19 @@
         <!-- 課表專屬：多重課表切換列 -->
         <div id="schedule-header-controls" class="hidden flex-col items-center justify-center w-full bg-white border-b border-slate-200 py-2.5">
             <div class="flex justify-center items-center gap-2">
-                <div class="relative inline-flex items-center bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg px-2 py-1.5 cursor-pointer shadow-sm border border-indigo-100 min-w-[140px] justify-center">
+                <div class="relative inline-flex items-center bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg px-2 py-1.5 cursor-pointer shadow-sm border border-indigo-100 justify-center">
                     <select id="schedule-selector" onchange="onScheduleSelectChange()" class="bg-transparent text-indigo-900 font-bold text-[15px] sm:text-base outline-none cursor-pointer appearance-none relative z-10 w-full" style="text-align-last: center;">
                         <option value="my_weekly_schedule">🧑‍🏫 我的課表</option>
                         <option value="office_weekly_schedule">🏢 學務處課表</option>
                         <!-- 動態生成其他課表 -->
                     </select>
                 </div>
+                <button onclick="printSchedule()" class="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors active:scale-95" title="列印課表">
+                    <i class="fa-solid fa-print"></i>
+                </button>
+                <button onclick="printSchedule()" class="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors active:scale-95" title="另存為 PDF">
+                    <i class="fa-solid fa-file-pdf"></i>
+                </button>
                 <button id="btn-delete-schedule" onclick="deleteCustomSchedule()" class="hidden w-9 h-9 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除此課表">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -1652,6 +1670,54 @@
             
             cancelDeleteCustomSchedule();
             showToast('已刪除課表');
+        }
+
+        /* --- 課表列印功能 --- */
+        function printSchedule() {
+            showToast('準備產生列印畫面...', 'success');
+            
+            const select = document.getElementById('schedule-selector');
+            let scheduleName = select.options[select.selectedIndex].text;
+            // 清理名稱中的前綴圖示
+            scheduleName = scheduleName.replace(/^(🧑‍🏫|🏢|📝|➕)\s*/, '');
+            
+            const scheduleContent = document.getElementById('schedule-grid').innerHTML;
+            const printArea = document.getElementById('print-area');
+            
+            // 替換/清理不需要的互動元素
+            let cleanHtml = scheduleContent
+                .replace(/onclick="[^"]*"/g, "")
+                .replace(/<i[^>]*fa-plus[^>]*><\/i>/g, "");
+
+            printArea.innerHTML = `
+                <div class="max-w-4xl mx-auto text-black pb-10 print-schedule-container">
+                    <div class="text-center mb-6 border-b-2 border-black pb-4">
+                        <h2 class="text-3xl font-black text-black">${scheduleName}</h2>
+                        <p class="text-slate-600 text-sm mt-2 font-medium">資料產出時間：${new Date().toLocaleString()}</p>
+                    </div>
+                    
+                    <div class="flex border-b-2 border-slate-400 bg-white font-bold text-black text-sm sm:text-base">
+                        <div class="w-16 sm:w-1/6 p-2 text-center border-r-2 border-slate-400 flex items-center justify-center shrink-0">時間</div>
+                        <div class="flex-1 p-2 text-center border-r-2 border-slate-400">星期一</div>
+                        <div class="flex-1 p-2 text-center border-r-2 border-slate-400">星期二</div>
+                        <div class="flex-1 p-2 text-center border-r-2 border-slate-400">星期三</div>
+                        <div class="flex-1 p-2 text-center border-r-2 border-slate-400">星期四</div>
+                        <div class="flex-1 p-2 text-center">星期五</div>
+                    </div>
+                    
+                    <div class="print-list-wrapper border-b-2 border-slate-400 [&>div]:border-b [&>div]:border-slate-300 [&>div>div]:border-r [&>div>div]:border-slate-300">
+                        ${cleanHtml}
+                    </div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                try {
+                    window.print();
+                } catch(e) {
+                    showToast('列印失敗，您的瀏覽器可能阻擋了彈出視窗', 'error');
+                }
+            }, 100);
         }
 
         /* --- 行事曆模組 (Calendar) --- */
