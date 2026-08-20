@@ -127,8 +127,8 @@
                 <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
                     <div class="relative inline-flex items-center bg-blue-50 hover:bg-blue-100 transition-colors rounded-lg px-2 py-1.5 cursor-pointer shadow-sm border border-blue-100 w-fit">
                         <select id="rollcall-class-selector" onchange="onRollcallClassChange()" class="bg-transparent text-blue-900 font-bold text-[15px] sm:text-base outline-none cursor-pointer appearance-none pr-6 relative z-10 text-center">
-                            <option value="">請選擇班級...</option>
-                            <option value="add_new_class">➕ 新增班級點名...</option>
+                            <option value="">班級</option>
+                            <option value="add_new_class">➕</option>
                         </select>
                         <i class="fa-solid fa-chevron-down text-blue-500 absolute right-2 text-sm pointer-events-none z-0"></i>
                     </div>
@@ -616,13 +616,17 @@
             const currentValue = select.value;
             const lastClass = localStorage.getItem('lastRollcallClass');
             
-            let optionsHtml = `<option value="">請選擇班級...</option>`;
+            let optionsHtml = `<option value="">班級</option>`;
             
             rollcallClasses.forEach(c => {
                 optionsHtml += `<option value="${c}">${c}</option>`;
             });
             
-            optionsHtml += `<option value="add_new_class">➕ 新增班級點名...</option>`;
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('sub') !== 'true') {
+                optionsHtml += `<option value="add_new_class">➕</option>`;
+            }
+            
             select.innerHTML = optionsHtml;
             
             if (Array.from(select.options).some(opt => opt.value === currentValue)) {
