@@ -973,7 +973,17 @@
                 if (data && data.classes) {
                     // 確保沒有重複，並與現有清單合併
                     const combined = [...new Set([...rollcallClasses, ...data.classes])];
-                    rollcallClasses = combined.sort();
+                    
+                    // 🔥 秒開優化：若有發現新班級，自動寫入極速快取，下次打開 0 延遲
+                    if (combined.length !== rollcallClasses.length) {
+                        rollcallClasses = combined.sort();
+                        if (window.cloudSaveRollcallClasses) {
+                            window.cloudSaveRollcallClasses(rollcallClasses);
+                        }
+                    } else {
+                        rollcallClasses = combined.sort();
+                    }
+                    
                     refreshRollcallClassSelect();
                 }
             } catch (err) {
@@ -2695,6 +2705,9 @@
             renderCalendar();
             initSwipeGestures();
             initHistoryTableDrag(); // 啟動歷史總表拖曳功能
+            
+            // 🔥 體感秒開優化：網頁一打開，就在背景偷偷載入 Excel 班級清單
+            fetchRollcallClassesFromExcel();
             
             // 通用代課老師模式攔截檢查
             const urlParams = new URLSearchParams(window.location.search);
