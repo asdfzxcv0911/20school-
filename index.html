@@ -2535,13 +2535,13 @@
                         </div>`;
                     } else {
                         const items = Array.isArray(rawData) ? rawData : [rawData];
-                        html += `<div class="flex-1 w-full flex flex-col justify-center items-center gap-0.5 relative z-0 pb-3">`;
+                        html += `<div class="flex-1 w-full h-full flex flex-col justify-center items-center gap-0.5 relative z-0">`;
                         items.forEach((data, index) => {
                             const colorTheme = scheduleColors[data.color] || scheduleColors['gray'];
                             html += `
                             <div onclick="openScheduleModal(${day}, '${period.id}', ${index})" class="w-full rounded py-1 flex flex-col justify-center items-center hover:bg-slate-50 transition-colors active:scale-95 cursor-pointer overflow-hidden">
-                                <div class="font-bold text-[11px] sm:text-[16px] ${colorTheme.text} leading-[1.2] px-0.5 text-center whitespace-nowrap tracking-tighter sm:tracking-normal w-full overflow-hidden truncate">${data.name}</div>
-                                ${data.location ? `<div class="text-[9px] sm:text-[13px] ${colorTheme.text} opacity-85 whitespace-nowrap tracking-tighter sm:tracking-normal text-center w-full overflow-hidden leading-[1.2] px-0.5 truncate mt-0.5">${data.location}</div>` : ''}
+                                <div class="font-bold text-[13px] sm:text-[18px] ${colorTheme.text} leading-[1.2] px-0.5 text-center whitespace-nowrap tracking-tighter sm:tracking-normal w-full overflow-hidden truncate">${data.name}</div>
+                                ${data.location ? `<div class="text-[11px] sm:text-[14px] ${colorTheme.text} opacity-85 whitespace-nowrap tracking-tighter sm:tracking-normal text-center w-full overflow-hidden leading-[1.2] px-0.5 truncate mt-0.5">${data.location}</div>` : ''}
                             </div>`;
                         });
                         html += `</div>`;
