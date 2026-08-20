@@ -1681,14 +1681,15 @@
             const scheduleContent = document.getElementById('schedule-grid').innerHTML;
             const printArea = document.getElementById('print-area');
             
-            // 替換/清理不需要的互動元素，同時強制將所有灰線轉換為純黑色細線
+            // 替換/清理不需要的互動元素，同時強制將所有灰線轉換為純黑色細線、灰字轉換為純黑色
             let cleanHtml = scheduleContent
                 .replace(/onclick="[^"]*"/g, "")
                 .replace(/<i[^>]*fa-plus[^>]*><\/i>/g, "")
-                .replace(/border-slate-\d00/g, "border-black");
+                .replace(/border-slate-\d00/g, "border-black")
+                .replace(/text-slate-\d00/g, "text-black");
 
             printArea.innerHTML = `
-                <div class="max-w-4xl mx-auto text-black pb-10 print-schedule-container">
+                <div class="max-w-4xl mx-auto text-black pb-10 print-schedule-container" style="font-family: '標楷體', 'BiauKai', 'DFKai-SB', serif;">
                     <div class="text-center mb-6 mt-4">
                         <h2 class="text-3xl font-black text-black">${scheduleName}</h2>
                     </div>
