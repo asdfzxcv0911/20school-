@@ -180,9 +180,6 @@
                 <button onclick="printSchedule()" class="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors active:scale-95" title="列印課表">
                     <i class="fa-solid fa-print"></i>
                 </button>
-                <button onclick="printSchedule()" class="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors active:scale-95" title="另存為 PDF">
-                    <i class="fa-solid fa-file-pdf"></i>
-                </button>
                 <button id="btn-delete-schedule" onclick="deleteCustomSchedule()" class="hidden w-9 h-9 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除此課表">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -1684,29 +1681,30 @@
             const scheduleContent = document.getElementById('schedule-grid').innerHTML;
             const printArea = document.getElementById('print-area');
             
-            // 替換/清理不需要的互動元素
+            // 替換/清理不需要的互動元素，同時強制將所有灰線轉換為純黑色細線
             let cleanHtml = scheduleContent
                 .replace(/onclick="[^"]*"/g, "")
-                .replace(/<i[^>]*fa-plus[^>]*><\/i>/g, "");
+                .replace(/<i[^>]*fa-plus[^>]*><\/i>/g, "")
+                .replace(/border-slate-\d00/g, "border-black");
 
             printArea.innerHTML = `
                 <div class="max-w-4xl mx-auto text-black pb-10 print-schedule-container">
-                    <div class="text-center mb-6 border-b-2 border-black pb-4">
+                    <div class="text-center mb-6 mt-4">
                         <h2 class="text-3xl font-black text-black">${scheduleName}</h2>
-                        <p class="text-slate-600 text-sm mt-2 font-medium">資料產出時間：${new Date().toLocaleString()}</p>
                     </div>
                     
-                    <div class="flex border-b-2 border-slate-400 bg-white font-bold text-black text-sm sm:text-base">
-                        <div class="w-16 sm:w-1/6 p-2 text-center border-r-2 border-slate-400 flex items-center justify-center shrink-0">時間</div>
-                        <div class="flex-1 p-2 text-center border-r-2 border-slate-400">星期一</div>
-                        <div class="flex-1 p-2 text-center border-r-2 border-slate-400">星期二</div>
-                        <div class="flex-1 p-2 text-center border-r-2 border-slate-400">星期三</div>
-                        <div class="flex-1 p-2 text-center border-r-2 border-slate-400">星期四</div>
-                        <div class="flex-1 p-2 text-center">星期五</div>
-                    </div>
-                    
-                    <div class="print-list-wrapper border-b-2 border-slate-400 [&>div]:border-b [&>div]:border-slate-300 [&>div>div]:border-r [&>div>div]:border-slate-300">
-                        ${cleanHtml}
+                    <div class="border border-black">
+                        <div class="flex border-b border-black bg-white font-bold text-black text-[11px] sm:text-base">
+                            <div class="w-16 sm:w-1/6 p-1 sm:p-3 text-center border-r border-black flex items-center justify-center shrink-0">時間</div>
+                            <div class="flex-1 p-1 sm:p-3 text-center border-r border-black">星期一</div>
+                            <div class="flex-1 p-1 sm:p-3 text-center border-r border-black">星期二</div>
+                            <div class="flex-1 p-1 sm:p-3 text-center border-r border-black">星期三</div>
+                            <div class="flex-1 p-1 sm:p-3 text-center border-r border-black">星期四</div>
+                            <div class="flex-1 p-1 sm:p-3 text-center">星期五</div>
+                        </div>
+                        <div class="print-list-wrapper">
+                            ${cleanHtml}
+                        </div>
                     </div>
                 </div>
             `;
