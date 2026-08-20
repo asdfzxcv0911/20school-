@@ -133,11 +133,11 @@
                         <i class="fa-solid fa-chevron-down text-blue-500 absolute right-2 text-sm pointer-events-none z-0"></i>
                     </div>
                     
-                    <input type="date" id="rollcall-date-picker" onchange="loadRollcallData()" class="relative px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer">
+                    <input type="date" id="rollcall-date-picker" onclick="if(this.showPicker) this.showPicker();" onchange="loadRollcallData()" class="relative px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer">
                 </div>
                 
                 <!-- 測驗項目輸入框：手機版自動換行並撐滿，電腦版維持同行 -->
-                <input type="text" id="rollcall-item-input" placeholder="測驗項目 (如: 跳繩)" class="hidden px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-32 transition-all">
+                <input type="text" id="rollcall-item-input" onchange="loadRollcallData()" placeholder="測驗項目 (如: 跳繩)" class="hidden px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-32 transition-all">
             </div>
             
             <!-- 右側：按鈕區塊 -->
@@ -853,23 +853,30 @@
                 }
                 // ------------------------------
                 
-                // 2. 切換班級時先清空暫存，避免看到上一班的畫面
+                // 2. 切換班級或日期時，先清空暫存，準備重新載入
                 state.attendanceRecords = {};
                 state.gradeRecords = {};
                 
-                // 3. 綁定 Firebase 即時監聽，資料會瞬間自動補上
-                const recordId = `${dateStr}_${className}`;
-                if (window.listenCloudRollcall) {
-                    window.listenCloudRollcall(recordId);
-                } else {
-                    // 若系統剛開啟模組還沒載入完，延遲幫您綁定
-                    let retry = setInterval(() => {
-                        if (window.listenCloudRollcall) {
-                            window.listenCloudRollcall(recordId);
-                            clearInterval(retry);
+                // 3. 直接從 Excel 歷史資料中，把當天的紀錄還原到按鈕上 (捨棄舊的雲端快取，以 Excel 為唯一基準)
+                const itemStr = document.getElementById('rollcall-item-input') ? document.getElementById('rollcall-item-input').value.trim() : '';
+                const targetDate = state.rollcallMode === 'grade' ? (itemStr ? `${dateStr} ${itemStr}` : dateStr) : dateStr;
+
+                state.rollcallStudents.forEach(student => {
+                    const seat = student.seat;
+                    if (state.historyData[seat] && state.historyData[seat][targetDate] !== undefined) {
+                        let val = state.historyData[seat][targetDate];
+                        if (state.rollcallMode === 'attendance') {
+                            // 將 Excel 中的中文轉換回按鈕代號
+                            if (val === '缺席') val = '曠';
+                            else if (val === '請假') val = '假';
+                            else if (val === '遲到') val = '遲';
+                            else if (val === '出席' || val === '') val = '出';
+                            state.attendanceRecords[seat] = val;
+                        } else {
+                            state.gradeRecords[seat] = val;
                         }
-                    }, 200);
-                }
+                    }
+                });
 
                 document.getElementById('rollcall-loading').classList.add('hidden');
                 document.getElementById('rollcall-loading').classList.remove('flex');
