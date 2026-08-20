@@ -1480,7 +1480,33 @@
                 <option value="office_weekly_schedule">🏢 學務處課表</option>
             `;
             
-            customSchedules.forEach(s => {
+            // 建立一份智慧排序後的名單
+            const sortedSchedules = [...customSchedules].sort((a, b) => {
+                // 定義分類函數
+                const getGroupInfo = (name) => {
+                    const classMatch = name.match(/^(\d{3})/); // 判斷開頭是否為3位數字(班級)
+                    if (classMatch) return { group: 1, val: parseInt(classMatch[1], 10) };
+                    if (name.startsWith("科任")) return { group: 3, val: name };
+                    return { group: 2, val: name }; // 行政課表 (非數字開頭、非科任開頭)
+                };
+
+                const infoA = getGroupInfo(a.name);
+                const infoB = getGroupInfo(b.name);
+
+                // 先比對群組 (班級 1 -> 行政 2 -> 科任 3)
+                if (infoA.group !== infoB.group) {
+                    return infoA.group - infoB.group;
+                }
+
+                // 同群組內部的排序
+                if (infoA.group === 1) {
+                    return infoA.val - infoB.val; // 班級依數字由小到大 (101 -> 102 -> ... -> 605)
+                } else {
+                    return infoA.val.localeCompare(infoB.val, 'zh-TW'); // 行政或科任依中文筆畫排序
+                }
+            });
+            
+            sortedSchedules.forEach(s => {
                 optionsHtml += `<option value="${s.id}">📝 ${s.name}</option>`;
             });
             
