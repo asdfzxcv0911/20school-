@@ -145,7 +145,7 @@
                         <i class="fa-solid fa-chevron-down text-blue-500 absolute right-2 text-sm pointer-events-none z-0"></i>
                     </div>
                     
-                    <input type="date" id="rollcall-date-picker" onclick="if(this.showPicker) this.showPicker();" onchange="loadRollcallData()" class="relative px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer">
+                    <input type="date" id="rollcall-date-picker" onchange="loadRollcallData()" class="relative px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer">
                 </div>
                 
                 <!-- 測驗項目輸入框：手機版自動換行並撐滿，電腦版維持同行 -->
@@ -215,6 +215,10 @@
             </div>
 
             <div id="rollcall-content" class="hidden flex-col">
+                <!-- 人數統計列 -->
+                <div id="rollcall-stats" class="bg-indigo-50/70 border-b border-indigo-100 p-2 sm:p-2.5 flex justify-center items-center gap-4 sm:gap-6 text-xs sm:text-sm font-bold shadow-sm">
+                    <!-- JS 動態生成 -->
+                </div>
                 <!-- 標題列 -->
                 <div class="flex border-b border-slate-200 bg-slate-50 font-bold text-slate-600 text-xs sm:text-sm sticky top-0 z-10">
                     <div class="w-12 sm:w-16 p-2 text-center border-r border-slate-200 shrink-0">座號</div>
@@ -920,6 +924,20 @@
             const container = document.getElementById('rollcall-student-list');
             let html = '';
             
+            // 計算人數統計
+            let totalCount = state.rollcallStudents.length;
+            let maleCount = state.rollcallStudents.filter(s => s.gender === '男').length;
+            let femaleCount = state.rollcallStudents.filter(s => s.gender === '女').length;
+            
+            const statsContainer = document.getElementById('rollcall-stats');
+            if (statsContainer) {
+                statsContainer.innerHTML = `
+                    <div class="text-indigo-800"><i class="fa-solid fa-users mr-1.5"></i>總人數: ${totalCount}</div>
+                    <div class="text-blue-700"><i class="fa-solid fa-mars mr-1.5"></i>男生: ${maleCount}</div>
+                    <div class="text-rose-700"><i class="fa-solid fa-venus mr-1.5"></i>女生: ${femaleCount}</div>
+                `;
+            }
+
             state.rollcallStudents.forEach((student, index) => {
                 const seat = student.seat;
                 
