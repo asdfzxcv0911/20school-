@@ -12,8 +12,106 @@
     <meta name="apple-mobile-web-app-title" content="專屬秘書">
     <meta name="theme-color" content="#4f46e5">
     
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTIwIiBmaWxsPSIjMGYyYjViIi8+CjxyZWN0IHg9IjQ4IiB5PSI0OCIgd2lkdGg9IjQxNiIgaGVpZ2h0PSI0MTYiIHJ4PSI4MCIgZmlsbD0iI2ZmZmZmZiIvPgo8cmVjdCB4PSIxMzYiIHk9IjExMiIgd2lkdGg9IjE2MCIgaGVpZ2h0PSIyNDgiIHJ4PSIyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWQ2NWMxIiBzdHJva2Utd2lkdGg9IjI0IiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxsaW5lIHgxPSIxMzYiIHkxPSIxODQiIHgyPSIyOTYiIHkyPSIxODQiIHN0cm9rZT0iIzFkNjVjMSIgc3Ryb2tlLXdpZHRoPSIyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxjaXJjbGUgY3g9IjE3NiIgY3k9IjI0OCIgcj0iMTYiIGZpbGw9IiMxZDY1YzEiLz4KPGNpcmNsZSBjeD0iMjU2IiBjeT0iMjQ4IiByPSIxNiIgZmlsbD0iIzFkNjVjMSIvPgo8Y2lyY2xlIGN4PSIxNzYiIGN5PSIzMjgiIHI9IjE2IiBmaWxsPSIjMWQ2NWMxIi8+CjxjaXJjbGUgY3g9IjI1NiIgY3k9IjMyOCIgcj0iMTYiIGZpbGw9IiMxZDY1YzEiLz4KPGNpcmNsZSBjeD0iMzM2IiBjeT0iMjQ4IiByPSIxNiIgZmlsbD0iIzFkNjVjMSIvPgo8Y2lyY2xlIGN4PSIzMzYiIGN5PSIzMjgiIHI9IjE2IiBmaWxsPSIjMWQ2NWMxIi8+CjxjaXJjbGUgY3g9IjMzNiIgY3k9IjQwOCIgcj0iMTYiIGZpbGw9IiMxZDY1YzEiLz4KPGNpcmNsZSBjeD0iMTc2IiBjeT0iNDA4IiByPSIxNiIgZmlsbD0iIzFkNjVjMSIvPgo8Y2lyY2xlIGN4PSIyNTYiIGN5PSI0MDgiIHI9IjE2IiBmaWxsPSIjMWQ2NWMxIi8+Cjwvc3ZnPg==">
-    <link rel="manifest" href='data:application/manifest+json,{"name":"組長專屬日曆與工作紀錄","short_name":"專屬秘書","display":"standalone","start_url":".","background_color":"#f8fafc","theme_color":"#4f46e5","icons":[{"src":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTIwIiBmaWxsPSIjMGYyYjViIi8+CjxyZWN0IHg9IjQ4IiB5PSI0OCIgd2lkdGg9IjQxNiIgaGVpZ2h0PSI0MTYiIHJ4PSI4MCIgZmlsbD0iI2ZmZmZmZiIvPgo8cmVjdCB4PSIxMzYiIHk9IjExMiIgd2lkdGg9IjE2MCIgaGVpZ2h0PSIyNDgiIHJ4PSIyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWQ2NWMxIiBzdHJva2Utd2lkdGg9IjI0IiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxsaW5lIHgxPSIxMzYiIHkxPSIxODQiIHgyPSIyOTYiIHkyPSIxODQiIHN0cm9rZT0iIzFkNjVjMSIgc3Ryb2tlLXdpZHRoPSIyNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxjaXJjbGUgY3g9IjE3NiIgY3k9IjI0OCIgcj0iMTYiIGZpbGw9IiMxZDY1YzEiLz4KPGNpcmNsZSBjeD0iMjU2IiBjeT0iMjQ4IiByPSIxNiIgZmlsbD0iIzFkNjVjMSIvPgo8Y2lyY2xlIGN4PSIxNzYiIGN5PSIzMjgiIHI9IjE2IiBmaWxsPSIjMWQ2NWMxIi8+CjxjaXJjbGUgY3g9IjI1NiIgY3k9IjMyOCIgcj0iMTYiIGZpbGw9IiMxZDY1YzEiLz4KPGNpcmNsZSBjeD0iMzM2IiBjeT0iMjQ4IiByPSIxNiIgZmlsbD0iIzFkNjVjMSIvPgo8Y2lyY2xlIGN4PSIzMzYiIGN5PSIzMjgiIHI9IjE2IiBmaWxsPSIjMWQ2NWMxIi8+CjxjaXJjbGUgY3g9IjMzNiIgY3k9IjQwOCIgcj0iMTYiIGZpbGw9IiMxZDY1YzEiLz4KPGNpcmNsZSBjeD0iMTc2IiBjeT0iNDA4IiByPSIxNiIgZmlsbD0iIzFkNjVjMSIvPgo8Y2lyY2xlIGN4PSIyNTYiIGN5PSI0MDgiIHI9IjE2IiBmaWxsPSIjMWQ2NWMxIi8+Cjwvc3ZnPg==","sizes":"512x512","type":"image/svg+xml"}]}'>
+    <!-- 專屬可愛圖示動態產生器 (解決手機不支援 SVG 導致白畫面的問題) -->
+    <link rel="icon" id="dynamic-favicon" type="image/png">
+    <link rel="apple-touch-icon" id="dynamic-apple-icon">
+    <link rel="manifest" id="dynamic-manifest">
+    
+    <script>
+        (function() {
+            function drawRoundRect(ctx, x, y, width, height, radius) {
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+            }
+            
+            function generateAppIcon() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                
+                // 1. 可愛溫暖的粉黃色背景
+                ctx.fillStyle = '#FFD166';
+                drawRoundRect(ctx, 0, 0, 512, 512, 110);
+                ctx.fill();
+                
+                // 2. 日曆白色主體
+                ctx.fillStyle = '#FFFFFF';
+                drawRoundRect(ctx, 106, 146, 300, 260, 40);
+                ctx.fill();
+                
+                // 3. 日曆粉紅色頂部
+                ctx.fillStyle = '#EF476F';
+                ctx.beginPath();
+                ctx.moveTo(146, 146);
+                ctx.lineTo(366, 146);
+                ctx.quadraticCurveTo(406, 146, 406, 186);
+                ctx.lineTo(406, 216);
+                ctx.lineTo(106, 216);
+                ctx.lineTo(106, 186);
+                ctx.quadraticCurveTo(106, 146, 146, 146);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 4. 深灰色日曆扣環
+                ctx.fillStyle = '#454A59';
+                drawRoundRect(ctx, 156, 106, 30, 80, 15);
+                ctx.fill();
+                drawRoundRect(ctx, 326, 106, 30, 80, 15);
+                ctx.fill();
+                
+                // 5. 可愛無辜的大眼睛
+                ctx.beginPath(); ctx.arc(206, 300, 18, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(306, 300, 18, 0, Math.PI * 2); ctx.fill();
+                
+                // 6. 甜美的微笑
+                ctx.strokeStyle = '#454A59';
+                ctx.lineWidth = 14;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.arc(256, 300, 40, 0.15 * Math.PI, 0.85 * Math.PI);
+                ctx.stroke();
+                
+                // 7. 粉紅小腮紅
+                ctx.fillStyle = '#FF9F9F';
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath(); ctx.arc(150, 320, 20, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(362, 320, 20, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha = 1.0;
+
+                return canvas.toDataURL('image/png'); // 強制轉為蘋果看得懂的 PNG
+            }
+
+            try {
+                const iconDataUrl = generateAppIcon();
+                document.getElementById('dynamic-apple-icon').href = iconDataUrl;
+                document.getElementById('dynamic-favicon').href = iconDataUrl;
+                
+                const manifestStr = JSON.stringify({
+                    "name": "組長專屬日曆與工作紀錄",
+                    "short_name": "專屬秘書",
+                    "display": "standalone",
+                    "start_url": ".",
+                    "background_color": "#f8fafc",
+                    "theme_color": "#4f46e5",
+                    "icons": [{"src": iconDataUrl, "sizes": "512x512", "type": "image/png"}]
+                });
+                const blob = new Blob([manifestStr], {type: 'application/manifest+json'});
+                document.getElementById('dynamic-manifest').href = URL.createObjectURL(blob);
+            } catch (e) {
+                console.error('圖示生成失敗', e);
+            }
+        })();
+    </script>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
