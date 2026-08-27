@@ -147,6 +147,9 @@
             .shadow-sm { box-shadow: none !important; border-bottom: 1px solid #e2e8f0 !important; }
             .print-break-inside-avoid { page-break-inside: avoid; }
             
+            /* 強制列印時所有等寬彈性盒子鎖死，絕對不准跑位 */
+            .print-schedule-container .flex-1 { flex: 1 1 0% !important; min-width: 0 !important; }
+            
             /* 課表列印：去背景省墨水，保留文字顏色 */
             .print-schedule-container .bg-emerald-50,
             .print-schedule-container .bg-blue-50,
@@ -353,11 +356,11 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="flex border-b border-slate-200 bg-slate-50 font-bold text-slate-600 text-[11px] sm:text-base">
                 <div class="w-16 sm:w-1/6 p-1 sm:p-3 text-center border-r border-slate-200 flex items-center justify-center shrink-0">時間</div>
-                <div class="flex-1 p-1 sm:p-3 text-center border-r border-slate-100">一</div>
-                <div class="flex-1 p-1 sm:p-3 text-center border-r border-slate-100">二</div>
-                <div class="flex-1 p-1 sm:p-3 text-center border-r border-slate-100">三</div>
-                <div class="flex-1 p-1 sm:p-3 text-center border-r border-slate-100">四</div>
-                <div class="flex-1 p-1 sm:p-3 text-center">五</div>
+                <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-slate-100">一</div>
+                <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-slate-100">二</div>
+                <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-slate-100">三</div>
+                <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-slate-100">四</div>
+                <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center">五</div>
             </div>
             <div id="schedule-grid" class="flex flex-col">
                 <!-- 課表內容由 JS 動態生成 -->
@@ -1824,11 +1827,11 @@
                     <div class="border border-black">
                         <div class="flex border-b border-black bg-white font-bold text-black text-[11px] sm:text-base">
                             <div class="w-16 sm:w-1/6 p-1 sm:p-3 text-center border-r border-black flex items-center justify-center shrink-0">時間</div>
-                            <div class="flex-1 p-1 sm:p-3 text-center border-r border-black">星期一</div>
-                            <div class="flex-1 p-1 sm:p-3 text-center border-r border-black">星期二</div>
-                            <div class="flex-1 p-1 sm:p-3 text-center border-r border-black">星期三</div>
-                            <div class="flex-1 p-1 sm:p-3 text-center border-r border-black">星期四</div>
-                            <div class="flex-1 p-1 sm:p-3 text-center">星期五</div>
+                            <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-black">星期一</div>
+                            <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-black">星期二</div>
+                            <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-black">星期三</div>
+                            <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-black">星期四</div>
+                            <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center">星期五</div>
                         </div>
                         <div class="print-list-wrapper">
                             ${cleanHtml}
