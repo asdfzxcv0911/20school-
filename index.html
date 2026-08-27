@@ -142,14 +142,35 @@
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
                 background-color: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                height: 100vh !important;
+                overflow: hidden !important;
             }
-            @page { margin: 1cm; size: A4 portrait; }
+            @page { margin: 0.8cm; size: A4 portrait; }
             .shadow-sm { box-shadow: none !important; border-bottom: 1px solid #e2e8f0 !important; }
             .print-break-inside-avoid { page-break-inside: avoid; }
             
-            /* 強制列印時所有等寬彈性盒子鎖死，絕對不准跑位 */
+            #print-area { height: 100vh !important; max-height: 100vh !important; overflow: hidden !important; }
+
+            /* 強制列印時所有等寬彈性盒子鎖死，並確保每一列完美等高 */
+            .print-list-wrapper > .flex { flex: 1 1 0% !important; min-height: 0 !important; }
             .print-schedule-container .flex-1 { flex: 1 1 0% !important; min-width: 0 !important; }
             
+            /* 解除不換行限制，縮小字體以容納4位老師 */
+            .print-schedule-container .truncate, 
+            .print-schedule-container .whitespace-nowrap {
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+                word-break: break-all !important;
+            }
+            .print-list-wrapper [class*="text-["] { line-height: 1.1 !important; }
+            .print-list-wrapper .font-bold.text-center { font-size: 10.5px !important; }
+            .print-list-wrapper .opacity-85 { font-size: 8.5px !important; }
+            .print-list-wrapper .py-0\.5, .print-list-wrapper .sm\:py-1 { padding: 1px !important; margin: 0 !important; }
+            .print-list-wrapper .gap-0\.5 { gap: 0 !important; }
+
             /* 課表列印：去背景省墨水，保留文字顏色 */
             .print-schedule-container .bg-emerald-50,
             .print-schedule-container .bg-blue-50,
@@ -1819,21 +1840,21 @@
                 .replace(/text-slate-\d00/g, "text-black");
 
             printArea.innerHTML = `
-                <div class="max-w-4xl mx-auto text-black pb-10 print-schedule-container" style="font-family: '標楷體', 'BiauKai', 'DFKai-SB', serif;">
-                    <div class="text-center mb-6 mt-4">
+                <div class="max-w-4xl mx-auto text-black print-schedule-container h-[95vh] w-full flex flex-col" style="font-family: '標楷體', 'BiauKai', 'DFKai-SB', serif;">
+                    <div class="text-center mb-2 mt-0 shrink-0">
                         <h2 class="text-3xl font-black text-black">${scheduleName}</h2>
                     </div>
                     
-                    <div class="border border-black">
-                        <div class="flex border-b border-black bg-white font-bold text-black text-[11px] sm:text-base">
-                            <div class="w-16 sm:w-1/6 p-1 sm:p-3 text-center border-r border-black flex items-center justify-center shrink-0">時間</div>
-                            <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-black">星期一</div>
-                            <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-black">星期二</div>
-                            <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-black">星期三</div>
-                            <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center border-r border-black">星期四</div>
-                            <div class="flex-1 basis-0 min-w-0 p-1 sm:p-3 text-center">星期五</div>
+                    <div class="border border-black flex-1 flex flex-col min-h-0">
+                        <div class="flex border-b border-black bg-white font-bold text-black text-[12px] sm:text-sm shrink-0">
+                            <div class="w-16 sm:w-1/6 p-2 text-center border-r border-black flex items-center justify-center shrink-0">時間</div>
+                            <div class="flex-1 basis-0 min-w-0 p-2 text-center border-r border-black">星期一</div>
+                            <div class="flex-1 basis-0 min-w-0 p-2 text-center border-r border-black">星期二</div>
+                            <div class="flex-1 basis-0 min-w-0 p-2 text-center border-r border-black">星期三</div>
+                            <div class="flex-1 basis-0 min-w-0 p-2 text-center border-r border-black">星期四</div>
+                            <div class="flex-1 basis-0 min-w-0 p-2 text-center">星期五</div>
                         </div>
-                        <div class="print-list-wrapper">
+                        <div class="print-list-wrapper flex-1 flex flex-col min-h-0">
                             ${cleanHtml}
                         </div>
                     </div>
