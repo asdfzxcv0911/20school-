@@ -1915,7 +1915,12 @@
                     window.scrollTo({ top: 0, behavior: "smooth" });
                     return;
                 }
-                const todayEl = document.querySelector('.bg-indigo-50.border-indigo-200') || document.querySelector('.bg-indigo-50\\/30');
+                
+                let todayEl = document.querySelector('.bg-indigo-50.border-indigo-200') || document.querySelector('.bg-indigo-50\\/30');
+                if (state.view === 'year') {
+                    todayEl = document.querySelector('.bg-indigo-600.text-white.shadow-sm');
+                }
+                
                 if (todayEl) {
                     const topNavHeight = document.getElementById('top-nav-bar').offsetHeight;
                     const elementPosition = todayEl.getBoundingClientRect().top;
