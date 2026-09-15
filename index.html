@@ -3035,8 +3035,8 @@
             document.addEventListener('touchend', (e) => {
                 if (e.target.closest('.modal-enter-active') || state.appMode !== 'calendar') return;
                 
-                // 保護：如果在可橫向滾動的網格區滑動，不觸發換月
-                if (e.target.closest('.overflow-x-auto, table, .grid-cols-7, #calendar-grid')) return;
+                // 保護：如果是上方導覽列或歷史表格，不觸發換月 (已解鎖日曆主體)
+                if (e.target.closest('.overflow-x-auto, table')) return;
                 
                 let touchEndX = e.changedTouches[0].clientX;
                 let touchEndY = e.changedTouches[0].clientY;
