@@ -184,13 +184,6 @@
             }
         }
 
-        /* 手機版 [單月] 行事曆專屬：強制撐寬至 750px，確保 8 個字不裁切，並開啟平滑橫向滾動 */
-        @media (max-width: 768px) {
-            .grid.grid-cols-7 { min-width: 750px !important; }
-            #calendar-grid { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
-            .grid.grid-cols-7 > div { min-height: 80px; }
-        }
-
         /* 讓點名表的日期輸入框整塊都可點擊出日曆 (破解安全框架限制) */
         #rollcall-date-picker::-webkit-calendar-picker-indicator {
             position: absolute;
@@ -3049,9 +3042,9 @@
             const diffY = endY - startY;
             if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY)) {
                 if (diffX > 0) {
-                    if (typeof changeMonth === 'function') changeMonth(-1); 
+                    if (typeof changeDate === 'function') changeDate(-1); 
                 } else {
-                    if (typeof changeMonth === 'function') changeMonth(1);  
+                    if (typeof changeDate === 'function') changeDate(1);  
                 }
             }
         }
