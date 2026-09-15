@@ -1571,33 +1571,64 @@
                         // 判斷是否為星期一到星期五，且具備讀取課表函數
                         if (dayOfWeek >= 1 && dayOfWeek <= 5 && window.fetchMyWeeklySchedule) {
                             const currentTime = now.getHours() * 60 + now.getMinutes();
-                            let currentPeriodId = null;
-
-                            // 找尋當前時間落在哪一節課
-                            for (let period of schedulePeriods) {
+                            
+                            // 找尋當前時間落在哪一節課 (包含下課時間預先鎖定下一節)
+                            let startIndex = -1;
+                            for (let i = 0; i < schedulePeriods.length; i++) {
+                                let period = schedulePeriods[i];
                                 if (period.isBreak) continue;
                                 const [startStr, endStr] = period.time.split('~');
-                                const [sH, sM] = startStr.split(':').map(Number);
                                 const [eH, eM] = endStr.split(':').map(Number);
-                                if (currentTime >= (sH * 60 + sM) && currentTime <= (eH * 60 + eM)) {
-                                    currentPeriodId = period.id;
+                                const endTimeInMinutes = eH * 60 + eM;
+                                
+                                // 核心邏輯：只要目前時間「還沒超過」這節課的下課鐘聲，這就是我們開始掃描的起點！
+                                if (currentTime <= endTimeInMinutes) {
+                                    startIndex = i;
                                     break;
                                 }
                             }
 
-                            if (currentPeriodId) {
+                            if (startIndex !== -1) {
                                 // 強制向雲端讀取 "🧑‍🏫 我的課表"
                                 const mySchedule = await window.fetchMyWeeklySchedule();
                                 if (mySchedule) {
-                                    const key = `${dayOfWeek}-${currentPeriodId}`;
-                                    const rawData = mySchedule[key];
-                                    if (rawData) {
-                                        const items = Array.isArray(rawData) ? rawData : [rawData];
-                                        const item = items[0]; // 一節課只抓第一個事項
-                                        if (item && item.location) {
-                                            const loc = item.location.trim();
-                                            // 從既有班級名單中尋找包含該字眼的班級，或是直接使用該字串
-                                            autoClass = rollcallClasses.find(c => loc.includes(c)) || loc;
+                                    // 從當前這節課開始，往後尋找「今天接下來的第一堂有填寫的課」
+                                    for (let i = startIndex; i < schedulePeriods.length; i++) {
+                                        let period = schedulePeriods[i];
+                                        if (period.isBreak) continue;
+
+                                        const key = `${dayOfWeek}-${period.id}`;
+                                        const rawData = mySchedule[key];
+                                        
+                                        if (rawData) {
+                                            const items = Array.isArray(rawData) ? rawData : [rawData];
+                                            const item = items[0]; // 一節課只抓第一個事項
+                                            if (item) {
+                                                // 把科目與地點全部串在一起掃描，不管打在哪一格都不漏接
+                                                const searchStr = (item.name || '') + ' ' + (item.location || '');
+                                                
+                                                // 1. 嘗試直接尋找班級 (例如 "605", "401")
+                                                autoClass = rollcallClasses.find(c => searchStr.includes(c));
+                                                
+                                                // 2. 智慧翻譯機：如果打的是 "4-2"，自動轉成 "402" 來比對
+                                                if (!autoClass) {
+                                                    const dashMatch = searchStr.match(/(\d)\s*-\s*(\d)/);
+                                                    if (dashMatch) {
+                                                        const potentialClass = `${dashMatch[1]}0${dashMatch[2]}`;
+                                                        autoClass = rollcallClasses.find(c => c === potentialClass) || potentialClass;
+                                                    }
+                                                }
+                                                
+                                                // 3. 最後備案：如果都找不到，但地點欄有填，就當地點用
+                                                if (!autoClass && item.location) {
+                                                    autoClass = item.location.trim();
+                                                }
+
+                                                // 💡 關鍵修正：只要找到班級，代表找到接下來要上的課了，立刻鎖定並跳出！
+                                                if (autoClass) {
+                                                    break; 
+                                                }
+                                            }
                                         }
                                     }
                                 }
