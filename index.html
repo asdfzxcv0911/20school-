@@ -170,7 +170,7 @@
         </div>
 
         <div class="mt-4 text-slate-400 text-sm">
-            &copy; 2026 二苓國小. 系統維護：<span id="secretAdminTrigger" class="cursor-pointer hover:text-slate-500 transition-colors select-none">體育組</span> v2
+            &copy; 2026 二苓國小. 系統維護：<span id="secretAdminTrigger" class="cursor-pointer hover:text-slate-500 transition-colors select-none">體育組</span> v3
         </div>
     </div>
 
@@ -1049,7 +1049,10 @@
             const cacheBuster = new Date().getTime();
             fetch(`${API_URL}?action=getData&_t=${cacheBuster}`)
             .then(res => {
-                if(!res.ok) throw new Error('網路回應錯誤');
+                if(!res.ok) {
+                    console.error('伺服器回應異常，狀態碼:', res.status);
+                    throw new Error(`伺服器錯誤 (${res.status})`);
+                }
                 return res.text();
             })
             .then(text => {
@@ -1075,10 +1078,10 @@
                 }
             })
             .catch(err => {
-                console.error('連線失敗:', err);
+                console.error('連線失敗詳細資訊:', err);
                 const loginBtn = document.getElementById('classLoginBtn');
                 loginBtn.textContent = '連線失敗';
-                showToast('⚠️ 網路連線失敗，請重新整理網頁', 'error');
+                showToast(`⚠️ 網路連線失敗：${err.message}`, 'error');
             });
 
             if (typeof google !== 'undefined' && GOOGLE_CLIENT_ID) { initGoogleSignIn(); } 
