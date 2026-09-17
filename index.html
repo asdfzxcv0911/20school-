@@ -170,7 +170,7 @@
         </div>
 
         <div class="mt-4 text-slate-400 text-sm">
-            &copy; 2026 二苓國小. 系統維護：<span id="secretAdminTrigger" class="cursor-pointer hover:text-slate-500 transition-colors select-none">體育組</span>
+            &copy; 2026 二苓國小. 系統維護：<span id="secretAdminTrigger" class="cursor-pointer hover:text-slate-500 transition-colors select-none">體育組</span> v1
         </div>
     </div>
 
@@ -826,12 +826,8 @@
             document.getElementById('cancelEditClassBtn').classList.remove('hidden');
             editingClassId = id;
             showToast(`正在編輯班級：${c.name}`, 'info');
-
-            // 確保捲動生效，移除平滑滾動以避免與 focus() 衝突
             window.scrollTo(0, 0);
-            setTimeout(() => {
-                document.getElementById('newClassPassword').focus({ preventScroll: true });
-            }, 50);
+            setTimeout(() => { document.getElementById('newClassName').focus(); }, 100);
         }
 
         document.getElementById('cancelEditClassBtn').addEventListener('click', () => {
@@ -940,12 +936,8 @@
             document.getElementById('cancelEditEventBtn').classList.remove('hidden');
             editingEventId = id;
             showToast(`正在編輯項目：${ev.name}`, 'info');
-
-            // 確保捲動生效，移除平滑滾動以避免與 focus() 衝突
             window.scrollTo(0, 0);
-            setTimeout(() => {
-                document.getElementById('newEventName').focus({ preventScroll: true });
-            }, 50);
+            setTimeout(() => { document.getElementById('newEventName').focus(); }, 100);
         }
 
         document.getElementById('cancelEditEventBtn').addEventListener('click', () => {
