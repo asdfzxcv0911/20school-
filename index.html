@@ -826,6 +826,10 @@
             document.getElementById('cancelEditClassBtn').classList.remove('hidden');
             editingClassId = id;
             showToast(`正在編輯班級：${c.name}`, 'info');
+
+            // 自動捲動到最上方並對焦密碼欄位，解決「看起來沒反應」的錯覺
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('newClassPassword').focus();
         }
 
         document.getElementById('cancelEditClassBtn').addEventListener('click', () => {
@@ -934,6 +938,10 @@
             document.getElementById('cancelEditEventBtn').classList.remove('hidden');
             editingEventId = id;
             showToast(`正在編輯項目：${ev.name}`, 'info');
+
+            // 自動捲動到最上方並對焦名稱欄位
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('newEventName').focus();
         }
 
         document.getElementById('cancelEditEventBtn').addEventListener('click', () => {
