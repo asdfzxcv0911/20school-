@@ -1320,11 +1320,14 @@
             });
         }
 
-        function openRollcallHistoryModal() {
+        async function openRollcallHistoryModal() {
             if (!state.rollcallStudents || state.rollcallStudents.length === 0) {
                 showToast('請先選擇班級並等待名單載入', 'error');
                 return;
             }
+            
+            showToast('正在同步最新雲端歷史資料...', 'success');
+            await loadRollcallData(); // 強制重新抓取 Google 試算表最新資料，確保雙向同步
             
             historyEditBuffer = {}; // 清空暫存
             const className = document.getElementById('rollcall-class-selector').value;
@@ -1383,6 +1386,7 @@
                     <td class="border border-slate-200 p-2 text-center text-sm font-bold text-slate-800 bg-slate-50 sticky left-16 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] truncate max-w-[6rem]">${name}</td>`;
                 
                 state.historyDates.forEach(date => {
+                    const safeDate = date.replace(/\n/g, '\\n'); // 解決換行符號破壞 HTML 結構的 BUG
                     let val = state.historyData[seat] && state.historyData[seat][date] !== undefined ? state.historyData[seat][date] : '';
                     
                     if (state.rollcallMode === 'attendance') {
@@ -1394,7 +1398,7 @@
                         else if(val === '出席' || val === '出') bgClass = 'text-slate-700';
                         
                         html += `<td class="border border-slate-200 p-1 text-center hover:bg-slate-50 transition-colors">
-                            <select onchange="bufferHistoryEdit('${date}', '${seat}', this.value)" class="w-full text-center text-sm p-1.5 rounded outline-none border border-transparent focus:border-indigo-400 focus:bg-white font-bold transition-colors cursor-pointer appearance-none ${bgClass}">
+                            <select onchange="bufferHistoryEdit('${safeDate}', '${seat}', this.value)" class="w-full text-center text-sm p-1.5 rounded outline-none border border-transparent focus:border-indigo-400 focus:bg-white font-bold transition-colors cursor-pointer appearance-none ${bgClass}">
                                 <option value="" ${val===''?'selected':''}></option>
                                 <option value="出" ${val==='出席'||val==='出'?'selected':''}>出席</option>
                                 <option value="曠" ${val==='缺席'||val==='曠'?'selected':''}>缺席</option>
@@ -1405,7 +1409,7 @@
                     } else {
                         // 成績模式：直接打字
                         html += `<td class="border border-slate-200 p-1 text-center hover:bg-slate-50 transition-colors">
-                            <input type="text" onchange="bufferHistoryEdit('${date}', '${seat}', this.value)" value="${val}" class="w-16 text-center text-sm p-1.5 rounded outline-none border border-transparent hover:border-slate-300 focus:border-indigo-400 focus:bg-white font-bold text-blue-700 bg-transparent transition-colors">
+                            <input type="text" onchange="bufferHistoryEdit('${safeDate}', '${seat}', this.value)" value="${val}" class="w-16 text-center text-sm p-1.5 rounded outline-none border border-transparent hover:border-slate-300 focus:border-indigo-400 focus:bg-white font-bold text-blue-700 bg-transparent transition-colors">
                         </td>`;
                     }
                 });
@@ -1455,11 +1459,23 @@
             try {
                 // 將有修改的每一天/每一個項目，依序推送到 Excel 後台進行覆寫
                 for (let dateStr of datesToUpdate) {
+                    
+                    // 【重大修復】將使用者的修改與原始資料合併，防止未修改的學生資料被清空
+                    let mergedRecords = {};
+                    state.rollcallStudents.forEach(student => {
+                        const seat = student.seat;
+                        let val = state.historyData[seat][dateStr] !== undefined ? state.historyData[seat][dateStr] : '';
+                        if (historyEditBuffer[dateStr][seat] !== undefined) {
+                            val = historyEditBuffer[dateStr][seat];
+                        }
+                        mergedRecords[seat] = val;
+                    });
+
                     const payload = {
                         className: targetSheetName,
                         date: dateStr, 
                         type: state.rollcallMode === 'attendance' ? '點名' : '成績',
-                        records: historyEditBuffer[dateStr] 
+                        records: mergedRecords 
                     };
 
                     await fetch(gasUrl, {
